@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GPS Canlı Takip & Rota</title>
-    <!-- Leaflet Harita Kütüphanesi -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 15px; background: #f4f4f9; }
@@ -24,29 +23,41 @@
 </head>
 <body>
 
-    <!-- Üst Menü / Profil Butonu -->
+    <!-- Üst Menü / Profil Butonu (Başlangıçta Gizli, Giriş Yapınca Görünür) -->
     <div class="top-bar">
         <h2 style="margin:0; font-size: 18px;">GPS Dedektif</h2>
-        <button onclick="openProfileModal()" style="width: auto; padding: 8px 15px; background: #343a40;">Profil / IP</button>
+        <button id="profileNavBtn" onclick="openProfileModal()" style="width: auto; padding: 8px 15px; background: #343a40; display: none;">Profil / IP</button>
     </div>
 
-    <!-- Giriş / Kayıt Paneli -->
-    <div class="card" id="authCard">
-        <h3 id="authTitle">Sisteme Giriş Yap</h3>
-        <p id="authDesc">Devam etmek için kayıtlı Gmail adresinizi girin:</p>
-        <input type="email" id="userEmailInput" placeholder="ornek@gmail.com">
-        <button id="authActionButton" onclick="handleAuthAction()">Giriş Yap</button>
-        <button class="btn-secondary" onclick="toggleAuthMode()" style="margin-top: 5px;" id="toggleAuthBtn">Hesabınız yok mu? Kayıt Ol</button>
+    <!-- Giriş Yap Paneli -->
+    <div class="card" id="loginCard">
+        <h3>Sisteme Giriş Yap</h3>
+        <input type="email" id="loginEmail" placeholder="Gmail Adresi">
+        <input type="password" id="loginPassword" placeholder="Şifre">
+        <button onclick="handleLogin()">Giriş Yap</button>
+        <button class="btn-secondary" onclick="showRegisterForm()" style="margin-top: 5px;">Hesabınız yok mu? Kayıt Ol</button>
     </div>
 
-    <!-- Ana Uygulama Paneli -->
+    <!-- Kayıt Ol Paneli (Başlangıçta Gizli) -->
+    <div class="card" id="registerCard" style="display: none;">
+        <h3>Yeni Hesap Kaydı</h3>
+        <input type="text" id="regFullName" placeholder="İsim Soyisim">
+        <input type="text" id="regUsername" placeholder="Kullanıcı Adı">
+        <input type="email" id="regEmail" placeholder="Gmail Adresi">
+        <input type="tel" id="regPhone" placeholder="Telefon Numarası">
+        <input type="password" id="regPassword" placeholder="Şifre">
+        <button onclick="handleRegister()" class="btn-success">Kayıt Ol</button>
+        <button class="btn-secondary" onclick="showLoginForm()" style="margin-top: 5px;">Zaten hesabın var mı? Giriş Yap</button>
+    </div>
+
+    <!-- Ana Uygulama Paneli (Giriş Yapılınca Görünür) -->
     <div class="card" id="appCard" style="display:none;">
         <h3 id="welcomeUserText">Hoş geldiniz</h3>
         <button class="btn-danger" onclick="logout()">Çıkış Yap</button>
     </div>
 
     <!-- Cihaz Eşleme ve Rota Paneli -->
-    <div class="card" id="trackingCard">
+    <div class="card" id="trackingCard" style="display:none;">
         <h3>Cihaz Eşleme & Rota</h3>
         <input type="text" id="targetIpInput" placeholder="Hedef 12 haneli IP adresini girin">
         
@@ -61,7 +72,7 @@
     </div>
 
     <!-- Canlı Harita Paneli -->
-    <div class="card">
+    <div class="card" id="mapCard" style="display:none;">
         <h3>Canlı GPS Konum</h3>
         <div id="map"></div>
     </div>
@@ -71,10 +82,26 @@
         <div class="modal-content">
             <span class="close-btn" onclick="closeProfileModal()">&times;</span>
             <h3>Profil Bilgileri</h3>
+            <p><strong>Ad Soyad:</strong> <span id="modalFullName">-</span></p>
+            <p><strong>Kullanıcı Adı:</strong> <span id="modalUsername">-</span></p>
             <p><strong>Kayıtlı E-posta:</strong> <span id="modalEmail">-</span></p>
+            <p><strong>Telefon:</strong> <span id="modalPhone">-</span></p>
             <p><strong>Cihaz IP Adresiniz (12 Haneli):</strong></p>
             <input type="text" id="myUniqueIpDisplay" readonly style="background: #e9ecef; text-align: center; font-weight: bold;">
-            <button onclick="copyIpToClipboard()" class="btn-success">IP Adresini Panoya Kopyala</button>
+            <button onclick="copyIpToClipboard()" class="btn-success" style="margin-top: 5px;">IP Adresini Panoya Kopyala</button>
+            <button onclick="confirmDeleteAccount()" class="btn-danger" style="margin-top: 10px;">Hesabımı Sil</button>
+        </div>
+    </div>
+
+    <!-- Hesap Silme Onay Modalı -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content">
+            <h4 style="color: #dc3545; margin-top:0;">Hesap Silme Onayı</h4>
+            <p>Hesabınızı silmek istediğinizden emin misiniz?</p>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="deleteAccountYes()" class="btn-danger" style="flex:1;">Evet</button>
+                <button onclick="deleteAccountNo()" class="btn-secondary" style="flex:1;">Hayır</button>
+            </div>
         </div>
     </div>
 
