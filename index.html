@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canlı GPS Takip ve Eşleştirme</title>
+    <!-- Leaflet Harita Kütüphanesi -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body, html { width: 100%; height: 100%; overflow: hidden; }
+
+        /* Giriş Ekranı */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #f0f2f5; display: flex; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .login-card {
+            background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center; width: 90%; max-width: 400px;
+        }
+        .google-btn {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;
+            background: white; cursor: pointer; font-size: 16px; font-weight: 500; margin-top: 20px;
+            transition: background 0.2s;
+        }
+        .google-btn:hover { background: #f8f9fa; }
+        .google-btn img { width: 24px; height: 24px; }
+
+        /* Gmail Seçim Penceresi (Simüle) */
+        #gmail-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1100;
+        }
+        .gmail-modal-content {
+            background: white; width: 90%; max-width: 350px; border-radius: 12px; padding: 20px;
+        }
+        .gmail-item {
+            padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; gap: 10px;
+        }
+        .gmail-item:hover { background: #f1f3f4; }
+
+        /* Ana Uygulama & Harita */
+        #app-screen { display: none; width: 100%; height: 100%; position: relative; }
+        #map { width: 100%; height: 100%; }
+
+        /* Alt Sağ Butonlar */
+        .bottom-controls {
+            position: absolute; bottom: 20px; right: 20px; z-index: 999; display: flex; gap: 10px;
+        }
+        .action-btn {
+            background: white; border: none; padding: 12px 18px; border-radius: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; font-weight: 600; font-size: 14px;
+        }
+
+        /* Modaller (Profil & Eşleştirme) */
+        .popup-modal {
+            display: none; position: fixed; bottom: 80px; right: 20px; background: white;
+            padding: 20px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); z-index: 1000; width: 300px;
+        }
+        .popup-modal h3 { margin-bottom: 10px; font-size: 16px; }
+        .ip-box-container { display: flex; align-items: center; gap: 5px; margin-top: 10px; }
+        .ip-box {
+            background: #f1f3f4; padding: 10px; border-radius: 6px; flex-grow: 1; font-family: monospace; font-size: 14px;
+        }
+        .copy-btn { background: #007bff; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; }
+        
+        .match-input { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ddd; border-radius: 6px; }
+        .match-btn { width: 100%; background: #28a745; color: white; border: none; padding: 10px; border-radius: 6px; margin-top: 10px; cursor: pointer; font-weight: bold; }
+        
+        .message { margin-top: 8px; font-size: 13px; font-weight: bold; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <!-- Giriş Ekranı -->
+    <div id="login-screen">
+        <div class="login-card">
+            <h2>GPS Takip Sistemine Giriş</h2>
+            <p style="color: #666; margin-top: 8px; font-size: 14px;">Devam etmek için Google hesabınızı seçin.</p>
+            <button class="google-btn" onclick="openGmailPicker()">
+                <img src="https://www.gstatic.com/images/branding/product/1x/gmail_48dp.png" alt="Gmail">
+                Gmail ile Giriş Yap
+            </button>
+            <p id="login-error" class="message" style="color: red;"></p>
+        </div>
+    </div>
+
+    <!-- Gmail Hesap Seçim Penceresi -->
+    <div id="gmail-modal" onclick="closeGmailPicker(event)">
+        <div class="gmail-modal-content" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 15px;">Hesap Seçin</h3>
+            <div id="gmail-list">
+                <!-- Cihazdaki mailler buraya dinamik veya örnek olarak gelecek -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Ana Harita ve Uygulama Ekranı -->
+    <div id="app-screen">
+        <div id="map"></div>
+
+        <!-- Alt Sağ Butonlar -->
+        <div class="bottom-controls">
+            <button class="action-btn" onclick="toggleModal('match-modal')">Cihaz Eşleştirme</button>
+            <button class="action-btn" onclick="toggleModal('profile-modal')">Profil</button>
+        </div>
+
+        <!-- Profil Modalı -->
+        <div id="profile-modal" class="popup-modal">
+            <h3>Profil Bilgileri</h3>
+            <p style="font-size: 13px; color: #555;" id="profile-email"></p>
+            <div class="ip-box-container">
+                <div class="ip-box" id="user-ip">Yükleniyor...</div>
+                <button class="copy-btn" onclick="copyIP()">📋</button>
+            </div>
+        </div>
+
+        <!-- Cihaz Eşleştirme Modalı -->
+        <div id="match-modal" class="popup-modal">
+            <h3>Cihaz Eşleştirme</h3>
+            <input type="text" id="target-ip" class="match-input" placeholder="12 haneli IP adresi girin">
+            <button class="match-btn" onclick="matchDevice()">Cihazı Eşle</button>
+            <p id="match-message" class="message"></p>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
