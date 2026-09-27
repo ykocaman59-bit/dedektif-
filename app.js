@@ -44,7 +44,9 @@ function selectGmail(email) {
     const foundUser = registeredUsers.find(u => u.email === email);
 
     if (!foundUser) {
-        document.getElementById("login-errorinnerText").textContent = "Giriş başarısız: Bu Gmail sistemde kayıtlı değil!";
+        // HTML'de ID hatası olmaması için güvenli kontrol eklendi
+        const errorEl = document.getElementById("login-error");
+        if(errorEl) errorEl.textContent = "Giriş başarısız: Bu Gmail sistemde kayıtlı değil!";
         alert("Giriş Başarısız: Bu Gmail adresi sistemde kayıtlı değil.");
         return;
     }
@@ -58,7 +60,7 @@ function selectGmail(email) {
     document.getElementById("profile-email").textContent = currentUser.email;
     document.getElementById("user-ip").textContent = currentUser.ip;
 
-    // Haritayı Başlat ve Canlı GPS'i aç
+    // Haritayı ve GPS İznini Başlat
     initMap();
 }
 
@@ -97,37 +99,54 @@ function matchDevice() {
     }
 }
 
-// 6. Harita ve Canlı GPS (Leaflet & Geolocation API)
+// 6. Harita, Zorunlu GPS İzni ve Canlı Konum Takibi
 function initMap() {
-    // Başlangıç konumu (İstanbul)
-    map = L.map('map').setView([41.0082, 28.9784], 15);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    // Canlı Konum Takibi (watchPosition)
     if (navigator.geolocation) {
-        watchId = navigator.geolocation.watchPosition(
+        // Kullanıcı giriş yaptıktan hemen sonra konum izni istenir ve ilk konum alınır
+        navigator.geolocation.getCurrentPosition(
             (position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
 
-                if (!marker) {
-                    marker = L.marker([lat, lon]).addTo(map).bindPopup("Canlı Konumunuz").openPopup();
-                } else {
-                    marker.setLatLng([lat, lon]);
-                }
-                map.setView([lat, lon], 16);
+                // Haritayı kullanıcının anlık konumuyla başlat
+                map = L.map('map').setView([lat, lon], 15);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                marker = L.marker([lat, lon]).addTo(map).bindPopup("Canlı Konumunuz").openPopup();
+
+                // Canlı Konum Takibini (Sürekli Güncelleme) Başlat
+                startLiveTracking();
             },
             (error) => {
                 console.error("GPS Alınamadı: ", error.message);
-                alert("GPS konum bilgisine erişilemedi. Lütfen konum izinlerini kontrol edin.");
+                alert("Uygulamanın çalışması ve harita takibi için GPS konum izni zorunludur! Lütfen cihaz ayarlarından konum izni verin.");
             },
-            { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
     } else {
-        alert("Tarayıcınız konum desteklemiyor.");
+        alert("Cihazınız veya tarayıcınız GPS konum özelliklerini desteklemiyor.");
     }
+}
+
+// 7. Canlı Konum Akışı (Sürekli Takip)
+function startLiveTracking() {
+    watchId = navigator.geolocation.watchPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            if (marker) {
+                marker.setLatLng([lat, lon]);
+                map.setView([lat, lon]); // Kullanıcı hareket ettikçe haritayı merkeze al
+            }
+        },
+        (error) => {
+            console.log("GPS takip hatası:", error.message);
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+    );
 }
