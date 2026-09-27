@@ -1,7 +1,7 @@
 let map, marker;
-let userDeviceIp = "192.168.1.50"; // Simüle edilmiş veya cihazın kendi IP adresi
+const userDeviceIp = "192.168.1.50"; // Simüle edilmiş cihazın kendi IP adresi
 
-// Sayfa yüklendiğinde haritayı başlat
+// Sayfa yüklendiğinde haritayı ve oturum durumunu başlat
 document.addEventListener("DOMContentLoaded", () => {
     initMap();
     checkLoginState();
@@ -15,16 +15,15 @@ function initMap() {
     }).addTo(map);
 }
 
-// Gerçekçi Gmail Seçici Paneli (Prompt Alternatifi)
+// Gmail Seçici Akışı
 function openGmailSelector() {
-    // Örnek kayıtlı/cihazda bulunan mailler (gerçek senaryoda Google Sign-In SDK veya hesap listesi gelir)
-    const simulatedGmail = prompt("Lütfen kullanmak istediğiniz Gmail adresinizi girin:\n(Örn: kullanici@gmail.com)");
+    const userEmail = prompt("Google hesabınızla devam etmek için lütfen Gmail adresinizi girin:\n(Örn: kullanici@gmail.com)");
     
-    if (simulatedGmail && simulatedGmail.includes("@gmail.com")) {
-        localStorage.setItem("loggedUser", simulatedGmail);
+    if (userEmail && userEmail.includes("@gmail.com")) {
+        localStorage.setItem("loggedUser", userEmail);
         checkLoginState();
-    } else if (simulatedGmail !== null) {
-        showCustomModal("Geçerli bir @gmail.com adresi girmelisiniz!");
+    } else if (userEmail !== null) {
+        showCustomModal("Lütfen geçerli bir @gmail.com adresi girin!");
     }
 }
 
@@ -45,7 +44,7 @@ function logout() {
     checkLoginState();
 }
 
-// IP Eşleme Kontrolü (Kendi IP'sini engelleme)
+// IP Eşleme Kontrolü (Kendi IP'sini engelleme ve özel uyarı paneli)
 function pairDevice() {
     const enteredIp = document.getElementById("targetIpInput").value.trim();
 
@@ -56,14 +55,14 @@ function pairDevice() {
 
     // Kullanıcının kendi IP adresini girmesini engelleme kontrolü
     if (enteredIp === userDeviceIp || enteredIp === "127.0.0.1" || enteredIp === "localhost") {
-        showCustomModal("Kendi IP adresinizi buraya yazamazsınız! Lütfen başka bir cihazın IP adresini girin.");
+        showCustomModal("Kendi IP adresinizi giremezsiniz! Lütfen kendi IP adresiniz haricinde başka bir cihazın IP adresini girin.");
         return;
     }
 
     // Başarılı eşleşme senaryosu
     alert("Eşleşme başarılı! Hedef IP: " + enteredIp);
     
-    // Haritada örnek bir konuma odaklanma (canlı simülasyon)
+    // Haritada örnek bir konumu gösterme
     if (map && marker) {
         map.removeLayer(marker);
     }
