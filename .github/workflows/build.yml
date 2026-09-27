@@ -34,7 +34,6 @@ jobs:
 
       - name: Capacitor Android Paketini Derle
         run: |
-          npx cap init --web-dir . --name "GPS Takip" --id "com.gps.takip"
           npx cap add android
           npx cap sync android
 
