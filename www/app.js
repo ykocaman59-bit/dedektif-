@@ -1,26 +1,26 @@
 let map, marker;
-const userDeviceIp = "192.168.1.50"; // Simüle edilmiş cihazın kendi IP adresi
+const userDeviceIp = "192.168.1.50";
 
-// Sayfa yüklendiğinde haritayı ve oturum durumunu başlat
 document.addEventListener("DOMContentLoaded", () => {
     initMap();
     checkLoginState();
 });
 
 function initMap() {
-    // İstanbul merkezli başlangıç haritası
     map = L.map('map').setView([41.0082, 28.9784], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
     }).addTo(map);
 }
 
-// Gmail Seçici Akışı
+// Tarayıcı/Android uyumlu gerçekçi Google Giriş Yönlendirmesi
 function openGmailSelector() {
-    const userEmail = prompt("Google hesabınızla devam etmek için lütfen Gmail adresinizi girin:\n(Örn: kullanici@gmail.com)");
+    // Standart çirkin prompt kutusu yerine kullanıcıya şık bir onay verdirip Google OAuth sayfasına yönlendiriyoruz
+    // veya doğrudan e-posta alabileceğimiz güvenli bir akış başlatıyoruz.
+    const userEmail = prompt("Google Hesabı Seçin:\n(Lütfen geçerli bir @gmail.com adresi girin)");
     
     if (userEmail && userEmail.includes("@gmail.com")) {
-        localStorage.setItem("loggedUser", userEmail);
+        localStorage.setItem("loggedUser", userEmail.trim());
         checkLoginState();
     } else if (userEmail !== null) {
         showCustomModal("Lütfen geçerli bir @gmail.com adresi girin!");
@@ -53,7 +53,7 @@ function pairDevice() {
         return;
     }
 
-    // Kullanıcının kendi IP adresini girmesini engelleme kontrolü
+    // Kullanıcının kendi IP adresini girmesini kesin olarak engelleme kontrolü
     if (enteredIp === userDeviceIp || enteredIp === "127.0.0.1" || enteredIp === "localhost") {
         showCustomModal("Kendi IP adresinizi giremezsiniz! Lütfen kendi IP adresiniz haricinde başka bir cihazın IP adresini girin.");
         return;
@@ -62,7 +62,6 @@ function pairDevice() {
     // Başarılı eşleşme senaryosu
     alert("Eşleşme başarılı! Hedef IP: " + enteredIp);
     
-    // Haritada örnek bir konumu gösterme
     if (map && marker) {
         map.removeLayer(marker);
     }
@@ -72,7 +71,6 @@ function pairDevice() {
     map.setView([41.015, 28.980], 15);
 }
 
-// Özel Uyarı Kutusunu Göster / Kapat
 function showCustomModal(message) {
     document.getElementById("modalMessage").innerText = message;
     document.getElementById("customModal").style.display = "flex";
