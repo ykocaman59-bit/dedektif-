@@ -3,53 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPS Canlı Takip</title>
+    <title>GPS Canlı Takip & Rota</title>
     <!-- Leaflet Harita Kütüphanesi -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 15px; background: #f4f4f9; }
         .card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input, button { width: 100%; padding: 10px; margin-top: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        input, select, button { width: 100%; padding: 10px; margin-top: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
         button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
         button:hover { background: #0056b3; }
-        #map { height: 250px; width: 100%; border-radius: 6px; margin-top: 10px; }
+        .btn-secondary { background: #6c757d; }
+        .btn-success { background: #28a745; }
+        .btn-danger { background: #dc3545; }
+        #map { height: 280px; width: 100%; border-radius: 6px; margin-top: 10px; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 85%; max-width: 300px; text-align: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 350px; text-align: center; position: relative; }
+        .close-btn { position: absolute; right: 10px; top: 5px; font-size: 20px; cursor: pointer; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <!-- Gmail Giriş Paneli -->
-    <div class="card" id="loginCard">
-        <h3>Gmail ile Giriş Yap</h3>
-        <p>Devam etmek için lütfen bir Google (Gmail) hesabı seçin:</p>
-        <button onclick="openGmailSelector()">Google Hesabı Seç</button>
+    <!-- Üst Menü / Profil Butonu -->
+    <div class="top-bar">
+        <h2 style="margin:0; font-size: 18px;">GPS Dedektif</h2>
+        <button onclick="openProfileModal()" style="width: auto; padding: 8px 15px; background: #343a40;">Profil / IP</button>
+    </div>
+
+    <!-- Giriş / Kayıt Paneli -->
+    <div class="card" id="authCard">
+        <h3 id="authTitle">Sisteme Giriş Yap</h3>
+        <p id="authDesc">Devam etmek için kayıtlı Gmail adresinizi girin:</p>
+        <input type="email" id="userEmailInput" placeholder="ornek@gmail.com">
+        <button id="authActionButton" onclick="handleAuthAction()">Giriş Yap</button>
+        <button class="btn-secondary" onclick="toggleAuthMode()" style="margin-top: 5px;" id="toggleAuthBtn">Hesabınız yok mu? Kayıt Ol</button>
     </div>
 
     <!-- Ana Uygulama Paneli -->
     <div class="card" id="appCard" style="display:none;">
-        <h3 id="userEmailDisplay">Hoş geldiniz</h3>
-        <button onclick="logout()" style="background: #dc3545;">Çıkış Yap</button>
+        <h3 id="welcomeUserText">Hoş geldiniz</h3>
+        <button class="btn-danger" onclick="logout()">Çıkış Yap</button>
     </div>
 
-    <!-- Cihaz Eşleme Paneli -->
-    <div class="card">
-        <h3>Cihaz Eşleme</h3>
-        <input type="text" id="targetIpInput" placeholder="Takip edilecek IP adresini girin">
-        <button onclick="pairDevice()">Eşleşmeyi Başlat</button>
+    <!-- Cihaz Eşleme ve Rota Paneli -->
+    <div class="card" id="trackingCard">
+        <h3>Cihaz Eşleme & Rota</h3>
+        <input type="text" id="targetIpInput" placeholder="Hedef 12 haneli IP adresini girin">
+        
+        <label style="font-size: 13px; font-weight: bold; display: block; margin-top: 10px;">Ulaşım Modu:</label>
+        <select id="travelMode">
+            <option value="car">Araba (Araç Rotası)</option>
+            <option value="foot">İnsan (Yaya Rotası)</option>
+        </select>
+
+        <button onclick="pairAndRouteDevice()" class="btn-success">Rotayı Oluştur</button>
+        <button onclick="startNavigation()" class="btn-secondary" style="margin-top: 5px;">Başla (Sesli Asistan)</button>
     </div>
 
     <!-- Canlı Harita Paneli -->
     <div class="card">
-        <h3>Canlı Konum Takibi</h3>
+        <h3>Canlı GPS Konum</h3>
         <div id="map"></div>
     </div>
 
-    <!-- Özel Uyarı Modalı -->
+    <!-- Profil ve IP Paneli Modalı -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeProfileModal()">&times;</span>
+            <h3>Profil Bilgileri</h3>
+            <p><strong>Kayıtlı E-posta:</strong> <span id="modalEmail">-</span></p>
+            <p><strong>Cihaz IP Adresiniz (12 Haneli):</strong></p>
+            <input type="text" id="myUniqueIpDisplay" readonly style="background: #e9ecef; text-align: center; font-weight: bold;">
+            <button onclick="copyIpToClipboard()" class="btn-success">IP Adresini Panoya Kopyala</button>
+        </div>
+    </div>
+
+    <!-- Genel Uyarı Modalı -->
     <div id="customModal" class="modal">
         <div class="modal-content">
-            <h4 style="margin-top:0; color:#dc3545;">Hata / Uyarı</h4>
-            <p id="modalMessage">Kendi IP adresinizi giremezsiniz!</p>
+            <h4 style="margin-top:0; color:#dc3545;">Uyarı</h4>
+            <p id="modalMessage">Mesaj</p>
             <button onclick="closeModal()">Tamam</button>
         </div>
     </div>
