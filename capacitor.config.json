@@ -1,6 +1,6 @@
 {
   "appId": "com.gps.takip",
   "appName": "GPS Takip",
-  "webDir": "www",
+  "webDir": ".",
   "bundledWebRuntime": false
 }
