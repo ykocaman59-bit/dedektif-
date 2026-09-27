@@ -28,8 +28,9 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Android SDK Ortamını Ayarla
-        uses: android-actions/setup-android@v3
+      - name: Android SDK ve Build Tools Ortamını Hazırla
+        run: |
+          echo "y" | sudo ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_HOME} "platforms;android-33" "build-tools;33.0.2" "platform-tools"
 
       - name: Capacitor Android Paketini Derle
         run: |
