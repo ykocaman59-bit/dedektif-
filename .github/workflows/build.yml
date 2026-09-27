@@ -32,6 +32,13 @@ jobs:
         run: |
           echo "y" | sudo ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_HOME} "platforms;android-33" "build-tools;33.0.2" "platform-tools"
 
+      - name: Web Dosyalarını www Klasörüne Otomatik Taşı
+        run: |
+          mkdir -p www
+          # index.html ve app.js dosyalarını www klasörüne kopyala
+          if [ -f "index.html" ]; then cp index.html www/; fi
+          if [ -f "app.js" ]; then cp app.js www/; fi
+
       - name: Capacitor Android Paketini Derle
         run: |
           rm -rf android
