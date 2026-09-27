@@ -1,0 +1,53 @@
+name: Android APK Build
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Kodları Depodan Çek
+        uses: actions/checkout@v4
+
+      - name: Node.js Ortamını Kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Proje Bağımlılıklarını Yükle
+        run: |
+          npm install
+
+      - name: Java (JDK 17) Ortamını Kur
+        uses: setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Android SDK Ortamını Ayarla
+        uses: android-actions/setup-android@v3
+
+      - name: Capacitor Android Paketini Derle
+        run: |
+          npx cap init --web-dir . --name "GPS Takip" --id "com.gps.takip"
+          npx cap add android
+          npx cap sync android
+
+      - name: Gradle ile Debug APK Oluştur ve Yeniden Adlandır
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+          # Çıkan APK'nın adını GPS-Takip.apk yapıyoruz
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/GPS-Takip.apk
+
+      - name: APK Dosyasını Kaydet (Artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: GPS Takip
+          path: android/app/build/outputs/apk/debug/GPS-Takip.apk
+          
