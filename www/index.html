@@ -23,7 +23,7 @@
 </head>
 <body>
 
-    <!-- Üst Menü / Profil Butonu (Başlangıçta Gizli, Giriş Yapınca Görünür) -->
+    <!-- Üst Menü / Profil Butonu -->
     <div class="top-bar">
         <h2 style="margin:0; font-size: 18px;">GPS Dedektif</h2>
         <button id="profileNavBtn" onclick="openProfileModal()" style="width: auto; padding: 8px 15px; background: #343a40; display: none;">Profil / IP</button>
@@ -35,10 +35,10 @@
         <input type="email" id="loginEmail" placeholder="Gmail Adresi">
         <input type="password" id="loginPassword" placeholder="Şifre">
         <button onclick="handleLogin()">Giriş Yap</button>
-        <button class="btn-secondary" onclick="showRegisterForm()" style="margin-top: 5px;">Hesabınız yok mu? Kayıt Ol</button>
+        <button type="button" class="btn-secondary" onclick="showRegisterForm()" style="margin-top: 5px;">Hesabınız yok mu? Kayıt Ol</button>
     </div>
 
-    <!-- Kayıt Ol Paneli (Başlangıçta Gizli) -->
+    <!-- Kayıt Ol Paneli -->
     <div class="card" id="registerCard" style="display: none;">
         <h3>Yeni Hesap Kaydı</h3>
         <input type="text" id="regFullName" placeholder="İsim Soyisim">
@@ -47,10 +47,10 @@
         <input type="tel" id="regPhone" placeholder="Telefon Numarası">
         <input type="password" id="regPassword" placeholder="Şifre">
         <button onclick="handleRegister()" class="btn-success">Kayıt Ol</button>
-        <button class="btn-secondary" onclick="showLoginForm()" style="margin-top: 5px;">Zaten hesabın var mı? Giriş Yap</button>
+        <button type="button" class="btn-secondary" onclick="showLoginForm()" style="margin-top: 5px;">Zaten hesabın var mı? Giriş Yap</button>
     </div>
 
-    <!-- Ana Uygulama Paneli (Giriş Yapılınca Görünür) -->
+    <!-- Ana Uygulama Paneli -->
     <div class="card" id="appCard" style="display:none;">
         <h3 id="welcomeUserText">Hoş geldiniz</h3>
         <button class="btn-danger" onclick="logout()">Çıkış Yap</button>
