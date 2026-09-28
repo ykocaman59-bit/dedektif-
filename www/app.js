@@ -1,6 +1,6 @@
-// Supabase Bağlantı Bilgileri
+// Supabase Bağlantı Bilgileri (Klasik Anon Anahtar ile Güncellendi)
 const SUPABASE_URL = 'https://tlsvemiagbctqvwrosup.supabase.co';
-const SUPABASE_KEY = 'Sb_publishable_5B2oG-hRXxPXiHFyblZbHA_anIZHIIX';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsc3ZlbWlhZ2JjdHF2d3Jvc3VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NTkyODMsImV4cCI6MjEwNjEzNTI4M30.fl2bk2Uar-Lujdz8rr7hni0V5eKZQV8klgUSBLooB_8';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
@@ -92,7 +92,6 @@ document.getElementById('btn-pair').addEventListener('click', async () => {
         return;
     }
 
-    // Hedef IP'nin veritabanında var olup olmadığını kontrol et
     const { data, error } = await supabaseClient
         .from('app_users')
         .select('device_ip, full_name')
@@ -104,7 +103,6 @@ document.getElementById('btn-pair').addEventListener('click', async () => {
         return;
     }
 
-    // Kendi kullanıcımıza hedef IP'yi kaydedelim
     const { error: updateError } = await supabaseClient
         .from('app_users')
         .update({ target_ip: targetIp })
@@ -134,20 +132,17 @@ function initMap() {
         map.invalidateSize();
     }
 
-    // 1. Kendi Konumumuzu Sürekli Takip Et ve Supabase'e Gönder
     if (navigator.geolocation) {
         watchId = navigator.geolocation.watchPosition(async position => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
 
-            // Haritada kendi konumumuzu güncelleyelim
             if (!marker) {
                 marker = L.marker([lat, lng]).addTo(map).bindPopup('Siz Buradasınız').openPopup();
             } else {
                 marker.setLatLng([lat, lng]);
             }
 
-            // Konumumuzu veritabanına kaydedelim
             await supabaseClient
                 .from('app_users')
                 .update({ latitude: lat, longitude: lng })
@@ -156,7 +151,6 @@ function initMap() {
         }, err => alert('Konum alınamadı: ' + err.message), { enableHighAccuracy: true });
     }
 
-    // 2. Eşleşilen Hedef Cihazın Konumunu Periyodik Olarak Çek ve Haritada Göster
     syncInterval = setInterval(async () => {
         if (!currentUser.target_ip) return;
 
@@ -183,7 +177,7 @@ function initMap() {
                 targetMarker.setLatLng([targetLat, targetLng]);
             }
         }
-    }, 4000); // Her 4 saniyede bir karşı tarafın konumunu günceller
+    }, 4000);
 }
 
 // Sesli Navigasyon (Web Speech API)
