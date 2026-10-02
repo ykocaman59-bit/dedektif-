@@ -256,7 +256,7 @@
             if(syncInterval) clearInterval(syncInterval);
         });
 
-        // Kayıt Olma (Telefon alanı eklendi)
+        // Kayıt Olma (user_profiles tablosu güncellendi)
         document.getElementById('btn-register').addEventListener('click', async () => {
             const full_name = document.getElementById('reg-fullname').value.trim();
             const username = document.getElementById('reg-username').value.trim();
@@ -272,7 +272,7 @@
             const ip_id = generateUniqueIP();
 
             const { error } = await supabaseClient
-                .from('profiles')
+                .from('user_profiles')
                 .insert([{ full_name, username, phone, email, password, ip_id }]);
 
             if (error) {
@@ -283,13 +283,13 @@
             }
         });
 
-        // Giriş Yapma
+        // Giriş Yapma (user_profiles tablosu güncellendi)
         document.getElementById('btn-login').addEventListener('click', async () => {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value.trim();
 
             const { data, error } = await supabaseClient
-                .from('profiles')
+                .from('user_profiles')
                 .select('*')
                 .eq('email', email)
                 .eq('password', password)
@@ -305,7 +305,7 @@
             }
         });
 
-        // Cihaz Eşleştirme
+        // Cihaz Eşleştirme (user_profiles tablosu güncellendi)
         document.getElementById('btn-pair').addEventListener('click', async () => {
             const targetIp = document.getElementById('target-ip-input').value.trim();
             if (!targetIp || targetIp.length !== 12) {
@@ -314,7 +314,7 @@
             }
 
             const { data, error } = await supabaseClient
-                .from('profiles')
+                .from('user_profiles')
                 .select('ip_id, full_name')
                 .eq('ip_id', targetIp)
                 .single();
@@ -358,8 +358,9 @@
                         marker.setLatLng([lat, lng]);
                     }
 
+                    // Konum Güncelleme (user_profiles tablosu güncellendi)
                     await supabaseClient
-                        .from('profiles')
+                        .from('user_profiles')
                         .update({ latitude: lat, longitude: lng, updated_at: new Date() })
                         .eq('id', currentUser.id);
 
@@ -369,8 +370,9 @@
             syncInterval = setInterval(async () => {
                 if (!currentUser.target_ip) return;
 
+                // Hedef Konum Çekme (user_profiles tablosu güncellendi)
                 const { data, error } = await supabaseClient
-                    .from('profiles')
+                    .from('user_profiles')
                     .select('latitude, longitude, full_name')
                     .eq('ip_id', currentUser.target_ip)
                     .single();
