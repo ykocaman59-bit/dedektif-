@@ -79,7 +79,6 @@
         .btn-danger { background-color: #ef4444; color: white; }
         .btn-danger:hover { background-color: #dc2626; }
 
-        /* Başlangıçta pasif gri buton stili */
         .btn-disabled-gray {
             background-color: #94a3b8 !important;
             color: #f1f5f9 !important;
@@ -144,6 +143,7 @@
             <h2>Kayıt Ol</h2>
             <input type="text" id="reg-fullname" placeholder="Ad Soyad">
             <input type="text" id="reg-username" placeholder="Kullanıcı Adı">
+            <input type="tel" id="reg-phone" placeholder="Telefon Numarası (Örn: 05... )">
             <input type="email" id="reg-email" placeholder="Gmail adresi (@gmail.com)">
             <input type="password" id="reg-password" placeholder="Şifre">
             <button id="btn-register" class="btn-primary">Kayıt Ol ve IP Üret</button>
@@ -157,6 +157,7 @@
             <h2>Kullanıcı Profili</h2>
             <p><strong>Ad Soyad:</strong> <span id="prof-name"></span></p>
             <p><strong>Kullanıcı Adı:</strong> <span id="prof-username"></span></p>
+            <p><strong>Telefon:</strong> <span id="prof-phone"></span></p>
             <p><strong>E-posta:</strong> <span id="prof-email"></span></p>
             <p><strong>Cihaz IP ID (12 Hane):</strong> <span id="prof-ip" class="ip-badge"></span></p>
             
@@ -166,9 +167,7 @@
                 <button id="btn-pair" class="btn-secondary">Cihaza Bağlan</button>
             </div>
 
-            <!-- Başlangıçta pasif gri buton -->
             <button id="btn-open-map" class="btn-primary btn-disabled-gray" disabled>Haritayı Aç ve Takip Et</button>
-            <!-- Kırmızı Çıkış Butonu -->
             <button id="btn-logout" class="btn-danger">Oturumu Kapat</button>
         </div>
     </div>
@@ -197,7 +196,6 @@
         let watchId = null;
         let syncInterval = null;
 
-        // Sayfa Yüklendiğinde Oturum Kontrolü (Oturum Kalıcılığı)
         window.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('gps_current_user');
             if (savedUser) {
@@ -224,10 +222,10 @@
         function loadProfileData() {
             document.getElementById('prof-name').innerText = currentUser.full_name || '';
             document.getElementById('prof-username').innerText = currentUser.username || '';
+            document.getElementById('prof-phone').innerText = currentUser.phone || '';
             document.getElementById('prof-email').innerText = currentUser.email || '';
             document.getElementById('prof-ip').innerText = currentUser.ip_id || '';
 
-            // Eğer daha önceden eşleşme yapıldıysa butonu mavi yap ve aktif et
             if (currentUser.target_ip) {
                 document.getElementById('target-ip-input').value = currentUser.target_ip;
                 activateMapButton();
@@ -244,7 +242,6 @@
         document.getElementById('go-to-register').addEventListener('click', (e) => { e.preventDefault(); showScreen('register-screen'); });
         document.getElementById('go-to-login').addEventListener('click', (e) => { e.preventDefault(); showScreen('login-screen'); });
         
-        // Kırmızı Çıkış Butonu İşlemi
         document.getElementById('btn-logout').addEventListener('click', () => {
             localStorage.removeItem('gps_current_user');
             currentUser = null;
@@ -259,10 +256,11 @@
             if(syncInterval) clearInterval(syncInterval);
         });
 
-        // Kayıt Olma (profiles tablosuna kayıt)
+        // Kayıt Olma (Telefon alanı eklendi)
         document.getElementById('btn-register').addEventListener('click', async () => {
             const full_name = document.getElementById('reg-fullname').value.trim();
             const username = document.getElementById('reg-username').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value.trim();
 
@@ -275,7 +273,7 @@
 
             const { error } = await supabaseClient
                 .from('profiles')
-                .insert([{ full_name, username, email, password, ip_id }]);
+                .insert([{ full_name, username, phone, email, password, ip_id }]);
 
             if (error) {
                 alert('Kayıt Hatası: ' + error.message);
@@ -307,7 +305,7 @@
             }
         });
 
-        // Cihaz Eşleştirme ve Dinamik Buton Aktifleştirme (Gri -> Mavi)
+        // Cihaz Eşleştirme
         document.getElementById('btn-pair').addEventListener('click', async () => {
             const targetIp = document.getElementById('target-ip-input').value.trim();
             if (!targetIp || targetIp.length !== 12) {
@@ -349,7 +347,6 @@
                 map.invalidateSize();
             }
 
-            // Kendi konumunu gizli olarak arka planda sürekli güncelle
             if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(async position => {
                     const lat = position.coords.latitude;
@@ -369,7 +366,6 @@
                 }, err => console.log('Konum alınamadı: ' + err.message), { enableHighAccuracy: true });
             }
 
-            // Hedef cihazın konumunu canlı takip et
             syncInterval = setInterval(async () => {
                 if (!currentUser.target_ip) return;
 
@@ -399,7 +395,6 @@
             }, 4000);
         }
 
-        // Sesli Navigasyon
         document.getElementById('btn-speak').addEventListener('click', () => {
             if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance("Canlı takip ve rota yönlendirmesi aktif.");
