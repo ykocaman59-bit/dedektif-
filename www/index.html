@@ -189,7 +189,7 @@
     
     <script>
         const SUPABASE_URL = 'https://tlsvemiagjctqvwrosup.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Kendi anahtarınız
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsc3ZlbWlhZ2JjdHF2d3Jvc3VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NTkyODMsImV4cCI6MjEwNjEzNTI4M30.fl2bk2Uar-Lujdz8rr7hni0V5eKZQV8klgUSBLooB_8';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentUser = null;
@@ -326,7 +326,6 @@
                 return;
             }
 
-            // Hedef IP'yi local kullanıcıya ata (isteğe bağlı veritabanına da sütun ekleyerek saklanabilir)
             currentUser.target_ip = targetIp;
             localStorage.setItem('gps_current_user', JSON.stringify(currentUser));
             
