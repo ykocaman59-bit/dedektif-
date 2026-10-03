@@ -155,14 +155,14 @@
             return id;
         }
 
-        // Google ile Giriş Butonu
+        // Google ile Giriş ve Firestore Kontrolü
         document.getElementById('btn-google-login').addEventListener('click', async () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             try {
                 const result = await auth.signInWithPopup(provider);
                 const user = result.user;
 
-                // Kullanıcı Firestore'da kayıtlı mı kontrol et
+                // Kullanıcı Firestore'da kayıtlı mı?
                 const userDoc = await db.collection("users").doc(user.uid).get();
 
                 if (userDoc.exists) {
@@ -170,20 +170,24 @@
                     loadProfile(user.uid);
                     showScreen('profile-screen');
                 } else {
-                    // Kayıtlı değilse ek kayıt ekranını aç ve maili göster
+                    // Kayıtlı değilse ek kayıt ekranını aç, maili göster
                     document.getElementById('selected-email-text').innerText = user.email;
                     showScreen('register-screen');
                 }
             } catch (error) {
                 console.error("Google Giriş Hatası:", error);
-                alert("Giriş iptal edildi veya bir hata oluştu: " + error.message);
+                alert("Giriş sırasında hata oluştu: " + error.message);
             }
         });
 
-        // Yeni Kullanıcı Ek Bilgilerini Tamamlama
+        // Yeni Kullanıcı Ek Bilgilerini Kaydetme
         document.getElementById('btn-complete-register').addEventListener('click', async () => {
             const user = auth.currentUser;
-            if (!user) return;
+            if (!user) {
+                alert("Oturum bulunamadı. Lütfen tekrar deneyin.");
+                showScreen('login-screen');
+                return;
+            }
 
             const name = document.getElementById('reg-name').value.trim();
             const username = document.getElementById('reg-username').value.trim();
@@ -210,7 +214,7 @@
                 loadProfile(user.uid);
                 showScreen('profile-screen');
             } catch (error) {
-                console.error("Kayıt kayıt hatası:", error);
+                console.error("Kayıt hatası:", error);
                 alert("Hata: " + error.message);
             }
         });
