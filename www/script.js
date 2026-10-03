@@ -1,5 +1,5 @@
-// Supabase Yapılandırması (Paylaştığın API Key ve projenin URL bilgisi)
-const SUPABASE_URL = 'https://buraya-proje-url-adresini-yaz.supabase.co'; // Proje URL adresini buraya eklemelisin
+// Supabase Yapılandırması
+const SUPABASE_URL = 'https://tlsvemiagbctqvwrosup.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_5B2oG-hRXxPXiHFyblZbHA_anIZHIIX';
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -29,10 +29,10 @@ async function handleAuth() {
         // Giriş Yapma İşlemi
         const { data, error } = await supabaseClient
             .from('user_profiles')
-            * .select('*')
-            * .eq('email', email)
-            * .eq('password', password)
-            * .single();
+            .select('*')
+            .eq('email', email)
+            .eq('password', password)
+            .single();
 
         if (error || !data) {
             errorMsg.innerText = 'Kullanıcı adı veya şifre yanlış.';
@@ -44,8 +44,8 @@ async function handleAuth() {
     } else {
         // Kayıt Olma İşlemi
         const { error } = await supabaseClient
-            * .from('user_profiles')
-            * .insert([{ email: email, password: password, full_name: 'Yeni Kullanıcı' }]);
+            .from('user_profiles')
+            .insert([{ email: email, password: password, full_name: 'Yeni Kullanıcı' }]);
 
         if (error) {
             errorMsg.innerText = 'Kayıt oluşturulamadı: ' + error.message;
