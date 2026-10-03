@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPS Takip Sistemi</title>
+    <title>GPS Takip Sistemi - Google Girişli</title>
     <!-- Leaflet Harita CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -13,62 +13,68 @@
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; background: #f4f6f9; }
         .screen.active { display: flex; }
 
-        /* Kart Tasarımı (Giriş ve Kayıt) */
         .auth-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 14px; }
-        .card h2 { text-align: center; color: #333; margin-bottom: 10px; font-size: 22px; }
+        .card { background: white; padding: 28px; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px; text-align: center; }
+        .card h2 { color: #333; font-size: 22px; }
+        .card p { color: #666; font-size: 14px; margin-bottom: 5px; }
         
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; text-align: left; }
         input:focus { border-color: #1976d2; }
 
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; color: white; text-align: center; transition: opacity 0.2s; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; color: white; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; transition: opacity 0.2s; }
         .btn:active { opacity: 0.8; }
         .btn-primary { background-color: #1976d2; }
         .btn-success { background-color: #2e7d32; }
         .btn-danger { background-color: #c62828; }
         
-        .switch-text { text-align: center; font-size: 13px; color: #666; margin-top: 5px; }
-        .switch-text span { color: #1976d2; cursor: pointer; font-weight: bold; }
+        /* Google Giriş Butonu Özel Tasarımı */
+        .btn-google { background-color: white; color: #444; border: 1px solid #ddd; font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-google img { width: 20px; height: 20px; }
 
         /* Profil ve Kontrol Paneli */
         .profile-header { background: #1976d2; color: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; }
-        .profile-card { background: white; margin: 16px; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 10px; }
+        .profile-card { background: white; margin: 16px; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 10px; text-align: left; }
         .profile-row { font-size: 14px; color: #444; display: flex; justify-content: space-between; align-items: center; }
         .id-badge { background: #e3f2fd; color: #0d47a1; padding: 4px 8px; border-radius: 6px; font-family: monospace; font-weight: bold; }
         .copy-btn { background: none; border: none; color: #1976d2; cursor: pointer; font-size: 13px; font-weight: bold; }
 
-        /* Harita Ekranı */
         #map { flex: 1; width: 100%; }
         .map-controls { padding: 12px; background: white; display: flex; gap: 10px; box-shadow: 0 -2px 6px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
-    <!-- 1. GİRİŞ EKRANI -->
+    <!-- 1. GİRİŞ EKRANI (GOOGLE İLE) -->
     <div id="login-screen" class="screen active">
         <div class="auth-container">
             <div class="card">
-                <h2>GPS Takip Giriş</h2>
-                <input type="email" id="login-email" placeholder="Gmail adresiniz">
-                <input type="password" id="login-password" placeholder="Şifreniz">
-                <button class="btn btn-primary" id="btn-login">Giriş Yap</button>
-                <div class="switch-text">Hesabınız yok mu? <span id="to-register">Kayıt Ol</span></div>
+                <h2>GPS Takip Sistemi</h2>
+                <p>Devam etmek için Google hesabınızı seçin</p>
+                <button class="btn btn-google" id="btn-google-login">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                    Google ile Giriş Yap
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- 2. KAYIT OL EKRANI -->
+    <!-- 2. İLK KAYIT EK EKRANI (Eğer gmail sistemde yoksa açılır) -->
     <div id="register-screen" class="screen">
         <div class="auth-container">
-            <div class="card">
-                <h2>Kayıt Ol</h2>
-                <input type="text" id="reg-name" placeholder="Ad Soyad">
-                <input type="text" id="reg-username" placeholder="Kullanıcı Adı">
-                <input type="email" id="reg-email" placeholder="Gmail adresi (@gmail.com)">
-                <input type="text" id="reg-phone" placeholder="Telefon Numarası">
-                <input type="password" id="reg-password" placeholder="Şifre">
-                <button class="btn btn-primary" id="btn-register">Kayıt Ol ve IP Üret</button>
-                <div class="switch-text">Zaten hesabınız var mı? <span id="to-login">Giriş Yap</span></div>
+            <div class="card" style="text-align: left;">
+                <h2>Ek Bilgileri Tamamla</h2>
+                <p style="font-size: 13px; margin-bottom: 10px;">Seçilen Gmail: <strong id="selected-email-text" style="color:#1976d2;"></strong></p>
+                
+                <label style="font-size: 12px; color: #666;">Ad Soyad</label>
+                <input type="text" id="reg-name" placeholder="Adınız Soyadınız">
+                
+                <label style="font-size: 12px; color: #666;">Kullanıcı Adı</label>
+                <input type="text" id="reg-username" placeholder="Kullanıcı adınız">
+                
+                <label style="font-size: 12px; color: #666;">Telefon Numarası</label>
+                <input type="text" id="reg-phone" placeholder="05XXXXXXXXX">
+                
+                <button class="btn btn-success" id="btn-complete-register" style="margin-top: 10px;">Kaydı Tamamla</button>
             </div>
         </div>
     </div>
@@ -120,7 +126,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // Firebase Konfigürasyonu
         const firebaseConfig = {
           apiKey: "AIzaSyA-rrU1BnXwN7rH0v4VHBJtAlFnMLelPUA",
           authDomain: "gps-takip-e90da.firebaseapp.com",
@@ -134,18 +139,13 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Ekran Değiştirme Fonksiyonu
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
         }
 
-        // Navigasyon Olayları
-        document.getElementById('to-register').addEventListener('click', () => showScreen('register-screen'));
-        document.getElementById('to-login').addEventListener('click', () => showScreen('login-screen'));
         document.getElementById('btn-back-profile').addEventListener('click', () => showScreen('profile-screen'));
 
-        // 12 Haneli Rastgele IP ID Üreteci
         function generateDeviceID() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             let id = '';
@@ -155,65 +155,66 @@
             return id;
         }
 
-        // Kayıt Ol İşlemi (Güncellendi)
-        document.getElementById('btn-register').addEventListener('click', async () => {
+        // Google ile Giriş Butonu
+        document.getElementById('btn-google-login').addEventListener('click', async () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                const result = await auth.signInWithPopup(provider);
+                const user = result.user;
+
+                // Kullanıcı Firestore'da kayıtlı mı kontrol et
+                const userDoc = await db.collection("users").doc(user.uid).get();
+
+                if (userDoc.exists) {
+                    // Kayıtlıysa direkt profile git
+                    loadProfile(user.uid);
+                    showScreen('profile-screen');
+                } else {
+                    // Kayıtlı değilse ek kayıt ekranını aç ve maili göster
+                    document.getElementById('selected-email-text').innerText = user.email;
+                    showScreen('register-screen');
+                }
+            } catch (error) {
+                console.error("Google Giriş Hatası:", error);
+                alert("Giriş iptal edildi veya bir hata oluştu: " + error.message);
+            }
+        });
+
+        // Yeni Kullanıcı Ek Bilgilerini Tamamlama
+        document.getElementById('btn-complete-register').addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+
             const name = document.getElementById('reg-name').value.trim();
             const username = document.getElementById('reg-username').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
             const phone = document.getElementById('reg-phone').value.trim();
-            const password = document.getElementById('reg-password').value;
 
-            if(!email || !password || !name) {
-                alert("Lütfen gerekli alanları doldurun.");
+            if (!name) {
+                alert("Lütfen ad soyad giriniz.");
                 return;
             }
 
-            try {
-                // Kullanıcıyı Authentication'a kaydet
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const uid = userCredential.user.uid;
-                const deviceId = generateDeviceID();
+            const deviceId = generateDeviceID();
 
-                // Firestore'a kullanıcı verisini yaz
-                await db.collection("users").doc(uid).set({
+            try {
+                await db.collection("users").doc(user.uid).set({
                     name: name,
-                    username: username,
-                    email: email,
+                    username: username || user.displayName || "Kullanıcı",
+                    email: user.email,
                     phone: phone,
                     deviceId: deviceId,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                alert("Kayıt başarılı! Profilinize yönlendiriliyorsunuz.");
-                loadProfile(uid);
+                alert("Kayıt başarıyla tamamlandı!");
+                loadProfile(user.uid);
                 showScreen('profile-screen');
             } catch (error) {
-                console.error("Kayıt Hatası Detayı:", error);
-                alert("Kayıt Hatası: " + error.message);
+                console.error("Kayıt kayıt hatası:", error);
+                alert("Hata: " + error.message);
             }
         });
 
-        // Giriş Yap İşlemi
-        document.getElementById('btn-login').addEventListener('click', async () => {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
-
-            if(!email || !password) {
-                alert("Lütfen mail ve şifrenizi girin.");
-                return;
-            }
-
-            try {
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                loadProfile(userCredential.user.uid);
-                showScreen('profile-screen');
-            } catch (error) {
-                alert("Giriş başarısız veya böyle bir hesap bulunamadı. Lütfen kayıt olun.");
-                showScreen('register-screen');
-            }
-        });
-
-        // Profili Yükle
         async function loadProfile(uid) {
             try {
                 const doc = await db.collection("users").doc(uid).get();
@@ -229,20 +230,17 @@
             }
         }
 
-        // ID Kopyala
         document.getElementById('btn-copy').addEventListener('click', () => {
             const text = document.getElementById('p-device-id').innerText;
             navigator.clipboard.writeText(text);
             alert("Cihaz IP ID kopyalandı: " + text);
         });
 
-        // Çıkış Yap
         document.getElementById('btn-logout').addEventListener('click', async () => {
             await auth.signOut();
             showScreen('login-screen');
         });
 
-        // Cihaz Eşleştirme
         let pairedTargetId = null;
         document.getElementById('btn-pair').addEventListener('click', () => {
             const targetId = document.getElementById('target-id-input').value.trim();
@@ -251,10 +249,9 @@
                 return;
             }
             pairedTargetId = targetId;
-            alert("Cihaz başarıyla eşleştirildi! Artık haritayı açabilirsiniz.");
+            alert("Cihaz başarıyla eşleştirildi!");
         });
 
-        // Harita Ekranına Geçiş
         let map = null;
         let marker = null;
         document.getElementById('btn-open-map').addEventListener('click', () => {
@@ -289,7 +286,6 @@
               });
         });
 
-        // Kendi Konumumu Arka Planda Paylaşma
         document.getElementById('btn-share-location').addEventListener('click', () => {
             const currentUser = auth.currentUser;
             if(!currentUser) return;
