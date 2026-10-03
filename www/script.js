@@ -1,64 +1,83 @@
-// Supabase Yapılandırması
-const SUPABASE_URL = 'https://tlsvemiagbctqvwrosup.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_5B2oG-hRXxPXiHFyblZbHA_anIZHIIX';
+// Senin Firebase yapılandırma bilgilerin
+const firebaseConfig = {
+  apiKey: "AIzaSyA-rrU1BnXwN7rH0v4VHBJtAlFnMLelPUA",
+  authDomain: "gps-takip-e90da.firebaseapp.com",
+  projectId: "gps-takip-e90da",
+  storageBucket: "gps-takip-e90da.firebasestorage.app",
+  messagingSenderId: "659536651462",
+  appId: "1:659536651462:web:5d0552f8080bb5815fe3c7"
+};
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Firebase'i başlat
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-let isLoginMode = true;
+// Bağlantı durumunu arayüze yansıt
+document.getElementById("connection-status").innerText = "Firebase Bağlandı";
+document.getElementById("connection-status").style.backgroundColor = "#2e7d32";
 
-function toggleMode() {
-    isLoginMode = !isLoginMode;
-    document.getElementById('form-title').innerText = isLoginMode ? 'Giriş Yap' : 'Kayıt Ol';
-    document.getElementById('submit-btn').innerText = isLoginMode ? 'Giriş Yap' : 'Kayıt Ol';
-    document.getElementById('toggle-text').innerText = isLoginMode ? 'Hesabın yok mu? Kayıt ol' : 'Zaten hesabın var mı? Giriş yap';
-    document.getElementById('error-msg').innerText = '';
-}
+// Haritayı Başlat (İstanbul merkezli örnek başlangıç)
+const map = L.map('map').setView([41.0082, 28.9784], 13);
 
-async function handleAuth() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const errorMsg = document.getElementById('error-msg');
-    errorMsg.innerText = '';
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
 
-    if (!email || !password) {
-        errorMsg.innerText = 'Lütfen tüm alanları doldurun.';
+let userMarker = null;
+let watchId = null;
+
+const btnShare = document.getElementById("btn-share");
+const btnStop = document.getElementById("btn-stop");
+
+// Konum Paylaşımı Başlat
+btnShare.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+        alert("Tarayıcınız konum desteklemiyor.");
         return;
     }
 
-    if (isLoginMode) {
-        // Giriş Yapma İşlemi
-        const { data, error } = await supabaseClient
-            .from('user_profiles')
-            .select('*')
-            .eq('email', email)
-            .eq('password', password)
-            .single();
+    btnShare.disabled = true;
+    btnStop.disabled = false;
 
-        if (error || !data) {
-            errorMsg.innerText = 'Kullanıcı adı veya şifre yanlış.';
-        } else {
-            alert('Giriş başarılı!');
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('app-container').style.display = 'block';
-        }
-    } else {
-        // Kayıt Olma İşlemi
-        const { error } = await supabaseClient
-            .from('user_profiles')
-            .insert([{ email: email, password: password, full_name: 'Yeni Kullanıcı' }]);
+    watchId = navigator.geolocation.watchPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
 
-        if (error) {
-            errorMsg.innerText = 'Kayıt oluşturulamadı: ' + error.message;
-        } else {
-            alert('Kayıt başarılı! Şimdi giriş yapabilirsiniz.');
-            toggleMode();
+            // Haritada konumu güncelle
+            if (userMarker) {
+                userMarker.setLatLng([lat, lng]);
+            } else {
+                userMarker = L.marker([lat, lng]).addTo(map)
+                    .bindPopup("Buradasınız").openPopup();
+            }
+            map.setView([lat, lng], 16);
+
+            // İleride veritabanına kaydetmek istersen Firestore kodu buraya gelecek:
+            // db.collection("locations").add({ latitude: lat, longitude: lng, timestamp: Date.now() });
+        },
+        (error) => {
+            console.error("Konum alınamadı: ", error);
+            alert("Konum alınamadı. GPS açık olduğundan emin olun.");
+            stopSharing();
+        },
+        {
+            enableHighAccuracy: true,
+            maximumAge: 10000,
+            timeout: 20000
         }
+    );
+});
+
+// Paylaşımı Durdur
+btnStop.addEventListener("click", stopSharing);
+
+function stopSharing() {
+    if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
     }
-}
-
-function handleLogout() {
-    document.getElementById('email').value = '';
-    document.getElementById('password').value = '';
-    document.getElementById('app-container').style.display = 'none';
-    document.getElementById('auth-container').style.display = 'block';
+    btnShare.disabled = false;
+    btnStop.disabled = true;
 }
