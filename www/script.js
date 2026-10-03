@@ -44,6 +44,7 @@ btnShare.addEventListener("click", () => {
         (position) => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
+            const timestamp = Date.now();
 
             // Haritada konumu güncelle
             if (userMarker) {
@@ -54,8 +55,18 @@ btnShare.addEventListener("click", () => {
             }
             map.setView([lat, lng], 16);
 
-            // İleride veritabanına kaydetmek istersen Firestore kodu buraya gelecek:
-            // db.collection("locations").add({ latitude: lat, longitude: lng, timestamp: Date.now() });
+            // Firestore Veritabanına Anlık Konum Kaydetme
+            db.collection("locations").add({
+                latitude: lat,
+                longitude: lng,
+                timestamp: timestamp
+            })
+            .then(() => {
+                console.log("Konum veritabanına kaydedildi:", lat, lng);
+            })
+            .catch((error) => {
+                console.error("Kayıt hatası: ", error);
+            });
         },
         (error) => {
             console.error("Konum alınamadı: ", error);
