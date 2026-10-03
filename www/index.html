@@ -155,12 +155,12 @@
             return id;
         }
 
-        // Kayıt Ol İşlemi
+        // Kayıt Ol İşlemi (Güncellendi)
         document.getElementById('btn-register').addEventListener('click', async () => {
-            const name = document.getElementById('reg-name').value;
-            const username = document.getElementById('reg-username').value;
-            const email = document.getElementById('reg-email').value;
-            const phone = document.getElementById('reg-phone').value;
+            const name = document.getElementById('reg-name').value.trim();
+            const username = document.getElementById('reg-username').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
             const password = document.getElementById('reg-password').value;
 
             if(!email || !password || !name) {
@@ -169,26 +169,33 @@
             }
 
             try {
+                // Kullanıcıyı Authentication'a kaydet
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const uid = userCredential.user.uid;
                 const deviceId = generateDeviceID();
 
-                // Kullanıcı bilgilerini Firestore'a kaydet
+                // Firestore'a kullanıcı verisini yaz
                 await db.collection("users").doc(uid).set({
-                    name, username, email, phone, deviceId
+                    name: name,
+                    username: username,
+                    email: email,
+                    phone: phone,
+                    deviceId: deviceId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
                 alert("Kayıt başarılı! Profilinize yönlendiriliyorsunuz.");
                 loadProfile(uid);
                 showScreen('profile-screen');
             } catch (error) {
+                console.error("Kayıt Hatası Detayı:", error);
                 alert("Kayıt Hatası: " + error.message);
             }
         });
 
         // Giriş Yap İşlemi
         document.getElementById('btn-login').addEventListener('click', async () => {
-            const email = document.getElementById('login-email').value;
+            const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
 
             if(!email || !password) {
@@ -201,7 +208,6 @@
                 loadProfile(userCredential.user.uid);
                 showScreen('profile-screen');
             } catch (error) {
-                // Kayıtlı değilse veya hatalıysa kayıt ekranına yönlendir
                 alert("Giriş başarısız veya böyle bir hesap bulunamadı. Lütfen kayıt olun.");
                 showScreen('register-screen');
             }
@@ -209,13 +215,17 @@
 
         // Profili Yükle
         async function loadProfile(uid) {
-            const doc = await db.collection("users").doc(uid).get();
-            if(doc.exists) {
-                const data = doc.data();
-                document.getElementById('p-name').innerText = data.name;
-                document.getElementById('p-username').innerText = data.username;
-                document.getElementById('p-email').innerText = data.email;
-                document.getElementById('p-device-id').innerText = data.deviceId || generateDeviceID();
+            try {
+                const doc = await db.collection("users").doc(uid).get();
+                if(doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('p-name').innerText = data.name || "-";
+                    document.getElementById('p-username').innerText = data.username || "-";
+                    document.getElementById('p-email').innerText = data.email || "-";
+                    document.getElementById('p-device-id').innerText = data.deviceId || generateDeviceID();
+                }
+            } catch (e) {
+                console.error("Profil yüklenirken hata:", e);
             }
         }
 
@@ -254,7 +264,6 @@
             }
             showScreen('map-screen');
 
-            // Haritayı başlat (Tek seferlik)
             if(!map) {
                 map = L.map('map').setView([41.0082, 28.9784], 14);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -263,7 +272,6 @@
                 }).addTo(map);
             }
 
-            // Eşleşilen cihazın konumunu dinle ve haritada göster
             db.collection("locations").where("deviceId", "==", pairedTargetId)
               .onSnapshot((snapshot) => {
                   snapshot.forEach((doc) => {
@@ -281,33 +289,32 @@
               });
         });
 
-        // Kendi Konumunu Arka Planda Paylaşma
-        let watchInterval = null;
+        // Kendi Konumumu Arka Planda Paylaşma
         document.getElementById('btn-share-location').addEventListener('click', () => {
             const currentUser = auth.currentUser;
             if(!currentUser) return;
 
-            // Kullanıcının kendi deviceId'sini al
             db.collection("users").doc(currentUser.uid).get().then((doc) => {
-                const myDeviceId = doc.data().deviceId;
+                if(doc.exists) {
+                    const myDeviceId = doc.data().deviceId;
 
-                if (navigator.geolocation) {
-                    navigator.geolocation.watchPosition((position) => {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
+                    if (navigator.geolocation) {
+                        navigator.geolocation.watchPosition((position) => {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
 
-                        // Konumu Firestore'a anlık yaz
-                        db.collection("locations").add({
-                            deviceId: myDeviceId,
-                            latitude: lat,
-                            longitude: lng,
-                            timestamp: Date.now()
-                        });
-                    }, (err) => console.error(err), { enableHighAccuracy: true });
+                            db.collection("locations").add({
+                                deviceId: myDeviceId,
+                                latitude: lat,
+                                longitude: lng,
+                                timestamp: Date.now()
+                            });
+                        }, (err) => console.error(err), { enableHighAccuracy: true });
 
-                    alert("Konumunuz arka planda paylaşılıyor!");
-                } else {
-                    alert("Tarayıcınız konum desteklemiyor.");
+                        alert("Konumunuz arka planda paylaşılıyor!");
+                    } else {
+                        alert("Tarayıcınız konum desteklemiyor.");
+                    }
                 }
             });
         });
