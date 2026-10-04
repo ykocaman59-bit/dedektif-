@@ -13,7 +13,6 @@
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; background: #1976d2; }
         .screen.active { display: flex; }
 
-        /* StoDo Tarzı Şık Giriş Ekranı */
         .auth-container { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 40px 24px; text-align: center; color: white; }
         .auth-content { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 20px; max-width: 400px; }
         .auth-content h1 { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
@@ -22,20 +21,17 @@
         input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; text-align: left; background: white; color: #333; }
         input:focus { border-color: #1976d2; }
 
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; transition: opacity 0.2s; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; transition: opacity 0.2s; }
         .btn:active { opacity: 0.8; }
         .btn-primary { background-color: #1976d2; color: white; }
         .btn-success { background-color: #2e7d32; color: white; }
         .btn-danger { background-color: #c62828; color: white; }
         
-        /* Google Giriş Butonu (StoDo Tarzı Beyaz Buton) */
-        .btn-google { background-color: white; color: #333; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn-google { background-color: white; color: #333; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 30px; }
         .btn-google img { width: 22px; height: 22px; }
 
         .auth-footer { font-size: 12px; opacity: 0.8; line-height: 1.4; max-width: 350px; }
-        .auth-footer a { color: white; text-decoration: underline; }
 
-        /* Profil ve Kontrol Paneli */
         .profile-header { background: #1976d2; color: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; }
         .profile-card { background: white; margin: 16px; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 10px; text-align: left; color: #333; }
         .profile-row { font-size: 14px; color: #444; display: flex; justify-content: space-between; align-items: center; }
@@ -48,14 +44,14 @@
 </head>
 <body>
 
-    <!-- 1. GİRİŞ EKRANI (StoDo Tarzı Google Giriş) -->
+    <!-- 1. GİRİŞ EKRANI -->
     <div id="login-screen" class="screen active">
         <div class="auth-container">
-            <div style="width: 100%;"></div> <!-- Boşluk dengeleyici -->
+            <div style="width: 100%;"></div>
             <div class="auth-content">
                 <div style="font-size: 48px; margin-bottom: -10px;">📍</div>
                 <h1>GPS Takip Sistemi</h1>
-                <p>Konumunuzu güvenle paylaşın, eşleştiğiniz cihazları canlı olarak takip edin ve hiçbir şeyi kaybetmeyin.</p>
+                <p>Devam etmek için Google hesabınızla oturum açın.</p>
             </div>
             <div style="width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px;">
                 <button class="btn btn-google" id="btn-google-login">
@@ -63,18 +59,17 @@
                     Google ile oturum aç
                 </button>
                 <div class="auth-footer">
-                    Yalnızca adınızı ve e-posta adresinizi alırız. Gmail'inizi, kişilerinizi veya dosyalarınızı göremeyiz.<br>
-                    <a href="#" onclick="alert('Gizlilik Politikası: Verileriniz güvendedir.')">Gizlilik Politikası</a>
+                    Yalnızca adınızı ve e-posta adresinizi güvenle doğrularız.
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 2. İLK KAYIT EK EKRANI (Eğer gmail sistemde yoksa açılır) -->
+    <!-- 2. İLK KAYIT MENÜSÜ EKRANI -->
     <div id="register-screen" class="screen" style="background: #f4f6f9; color: #333;">
         <div class="auth-container" style="justify-content: center;">
             <div class="profile-card" style="width: 100%; max-width: 400px; text-align: left;">
-                <h2 style="color: #1976d2; font-size: 20px; margin-bottom: 5px;">Ek Bilgileri Tamamla</h2>
+                <h2 style="color: #1976d2; font-size: 20px; margin-bottom: 5px;">Kayıt Oluştur</h2>
                 <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Seçilen Gmail: <strong id="selected-email-text" style="color:#1976d2;"></strong></p>
                 
                 <label style="font-size: 12px; color: #666; font-weight: bold;">Ad Soyad</label>
@@ -86,7 +81,7 @@
                 <label style="font-size: 12px; color: #666; font-weight: bold;">Telefon Numarası</label>
                 <input type="text" id="reg-phone" placeholder="05XXXXXXXXX" style="margin-bottom: 15px;">
                 
-                <button class="btn btn-success" id="btn-complete-register">Kaydı Tamamla</button>
+                <button class="btn btn-success" id="btn-complete-register">Kayıt Oluştur ve IP ID Üret</button>
             </div>
         </div>
     </div>
@@ -95,7 +90,7 @@
     <div id="profile-screen" class="screen" style="background: #f4f6f9; color: #333;">
         <div class="profile-header">
             <h3>Kullanıcı Profili</h3>
-            <button class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 12px; border-radius: 6px;" id="btn-logout">Çıkış</button>
+            <button class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 12px;" id="btn-logout">Çıkış</button>
         </div>
         <div class="profile-card">
             <div class="profile-row"><span>Ad Soyad:</span> <strong id="p-name">-</strong></div>
@@ -113,8 +108,8 @@
         <div class="profile-card">
             <h4 style="font-size: 16px; color: #333; margin-bottom: 5px;">Cihaz Eşleştir</h4>
             <input type="text" id="target-id-input" placeholder="Karşı tarafın 12 haneli IP ID'si">
-            <button class="btn btn-success" id="btn-pair" style="border-radius: 8px;">Cihaza Bağlan</button>
-            <button class="btn btn-primary" id="btn-open-map" style="border-radius: 8px;">Haritayı Aç ve Takip Et</button>
+            <button class="btn btn-success" id="btn-pair">Cihaza Bağlan</button>
+            <button class="btn btn-primary" id="btn-open-map">Haritayı Aç ve Takip Et</button>
         </div>
     </div>
 
@@ -122,11 +117,11 @@
     <div id="map-screen" class="screen" style="background: #f4f6f9;">
         <div class="profile-header">
             <h3>Canlı Konum Takibi</h3>
-            <button class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 12px; border-radius: 6px;" id="btn-back-profile">Geri Dön</button>
+            <button class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 12px;" id="btn-back-profile">Geri Dön</button>
         </div>
         <div id="map"></div>
         <div class="map-controls">
-            <button class="btn btn-primary" id="btn-share-location" style="border-radius: 8px;">Konumumu Arka Planda Paylaş</button>
+            <button class="btn btn-primary" id="btn-share-location">Konumumu Arka Planda Paylaş</button>
         </div>
     </div>
 
@@ -167,34 +162,55 @@
             return id;
         }
 
-        // Google ile Giriş ve StoDo Tarzı Hesap Seçici Entegrasyonu
-        document.getElementById('btn-google-login').addEventListener('click', async () => {
+        // Google ile Yönlendirerek Giriş Başlatma (Beyaz Ekran Hatasını Önler)
+        document.getElementById('btn-google-login').addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithRedirect(provider);
+        });
+
+        // Sayfa Yüklendiğinde Google'dan Dönüşü ve Oturum Durumunu Kontrol Et
+        window.addEventListener('DOMContentLoaded', async () => {
             try {
-                const result = await auth.signInWithPopup(provider);
-                const user = result.user;
-
-                // Kullanıcı Firestore'da kayıtlı mı kontrol et
-                const userDoc = await db.collection("users").doc(user.uid).get();
-
-                if (userDoc.exists) {
-                    loadProfile(user.uid);
-                    showScreen('profile-screen');
+                const result = await auth.getRedirectResult();
+                if (result.user) {
+                    checkUserRegistration(result.user);
                 } else {
-                    document.getElementById('selected-email-text').innerText = user.email;
-                    showScreen('register-screen');
+                    auth.onAuthStateChanged(user => {
+                        if (user) {
+                            checkUserRegistration(user);
+                        } else {
+                            showScreen('login-screen');
+                        }
+                    });
                 }
             } catch (error) {
-                console.error("Google Giriş Hatası:", error);
-                alert("Giriş sırasında hata oluştu: " + error.message);
+                console.error("Giriş Yönlendirme Hatası:", error);
+                showScreen('login-screen');
             }
         });
 
-        // Yeni Kullanıcı Kayıt Tamamlama
+        async function checkUserRegistration(user) {
+            try {
+                const userDoc = await db.collection("users").doc(user.uid).get();
+                if (userDoc.exists) {
+                    // Daha önce kayıtlıysa direkt profile git
+                    loadProfile(user.uid);
+                    showScreen('profile-screen');
+                } else {
+                    // İlk kayıt ise kayıt menüsünü aç ve e-postayı yaz
+                    document.getElementById('selected-email-text').innerText = user.email;
+                    showScreen('register-screen');
+                }
+            } catch (e) {
+                console.error("Kayıt kontrol hatası:", e);
+            }
+        }
+
+        // Kayıt Menüsünde Bilgileri Girip Kayıt Oluşturma ve IP ID Üretme
         document.getElementById('btn-complete-register').addEventListener('click', async () => {
             const user = auth.currentUser;
             if (!user) {
-                alert("Oturum bulunamadı. Lütfen tekrar deneyin.");
+                alert("Oturum bulunamadı. Lütfen tekrar giriş yapın.");
                 showScreen('login-screen');
                 return;
             }
@@ -204,13 +220,15 @@
             const phone = document.getElementById('reg-phone').value.trim();
 
             if (!name) {
-                alert("Lütfen ad soyad giriniz.");
+                alert("Lütfen ad ve soyad alanını doldurun.");
                 return;
             }
 
+            // 12 Haneli Benzersiz IP ID Üretiliyor
             const deviceId = generateDeviceID();
 
             try {
+                // Kullanıcının tüm bilgileri Firebase Firestore'a kaydediliyor
                 await db.collection("users").doc(user.uid).set({
                     name: name,
                     username: username || user.displayName || "Kullanıcı",
@@ -220,12 +238,12 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                alert("Kayıt başarıyla tamamlandı!");
+                alert("Kayıt başarıyla oluşturuldu! IP ID'niz: " + deviceId);
                 loadProfile(user.uid);
                 showScreen('profile-screen');
             } catch (error) {
-                console.error("Kayıt hatası:", error);
-                alert("Hata: " + error.message);
+                console.error("Kayıt yazma hatası:", error);
+                alert("Kayıt sırasında hata oluştu: " + error.message);
             }
         });
 
@@ -237,7 +255,7 @@
                     document.getElementById('p-name').innerText = data.name || "-";
                     document.getElementById('p-username').innerText = data.username || "-";
                     document.getElementById('p-email').innerText = data.email || "-";
-                    document.getElementById('p-device-id').innerText = data.deviceId || generateDeviceID();
+                    document.getElementById('p-device-id').innerText = data.deviceId || "-";
                 }
             } catch (e) {
                 console.error("Profil yüklenirken hata:", e);
@@ -277,7 +295,7 @@
 
             if(!map) {
                 map = L.map('map').setView([41.0082, 28.9784], 14);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}x/{y}.png', {
                     maxZoom: 19,
                     attribution: '&copy; OpenStreetMap'
                 }).addTo(map);
