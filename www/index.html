@@ -162,42 +162,38 @@
             return id;
         }
 
-        // Google ile Yönlendirerek Giriş Başlatma (Beyaz Ekran Hatasını Önler)
-        document.getElementById('btn-google-login').addEventListener('click', () => {
+        // Mobil APK WebView ortamında localhost/redirect hatasını önlemek için Popup Modu
+        document.getElementById('btn-google-login').addEventListener('click', async () => {
             const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithRedirect(provider);
-        });
-
-        // Sayfa Yüklendiğinde Google'dan Dönüşü ve Oturum Durumunu Kontrol Et
-        window.addEventListener('DOMContentLoaded', async () => {
             try {
-                const result = await auth.getRedirectResult();
+                const result = await auth.signInWithPopup(provider);
                 if (result.user) {
                     checkUserRegistration(result.user);
-                } else {
-                    auth.onAuthStateChanged(user => {
-                        if (user) {
-                            checkUserRegistration(user);
-                        } else {
-                            showScreen('login-screen');
-                        }
-                    });
                 }
             } catch (error) {
-                console.error("Giriş Yönlendirme Hatası:", error);
-                showScreen('login-screen');
+                console.error("Giriş Hatası:", error);
+                alert("Giriş yapılamadı: " + error.message);
             }
+        });
+
+        // Sayfa Yüklendiğinde Oturum Durumunu Doğrudan Dinle
+        window.addEventListener('DOMContentLoaded', () => {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    checkUserRegistration(user);
+                } else {
+                    showScreen('login-screen');
+                }
+            });
         });
 
         async function checkUserRegistration(user) {
             try {
                 const userDoc = await db.collection("users").doc(user.uid).get();
                 if (userDoc.exists) {
-                    // Daha önce kayıtlıysa direkt profile git
                     loadProfile(user.uid);
                     showScreen('profile-screen');
                 } else {
-                    // İlk kayıt ise kayıt menüsünü aç ve e-postayı yaz
                     document.getElementById('selected-email-text').innerText = user.email;
                     showScreen('register-screen');
                 }
@@ -224,11 +220,9 @@
                 return;
             }
 
-            // 12 Haneli Benzersiz IP ID Üretiliyor
             const deviceId = generateDeviceID();
 
             try {
-                // Kullanıcının tüm bilgileri Firebase Firestore'a kaydediliyor
                 await db.collection("users").doc(user.uid).set({
                     name: name,
                     username: username || user.displayName || "Kullanıcı",
@@ -295,7 +289,7 @@
 
             if(!map) {
                 map = L.map('map').setView([41.0082, 28.9784], 14);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}x/{y}.png', {
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}{r}.png', {
                     maxZoom: 19,
                     attribution: '&copy; OpenStreetMap'
                 }).addTo(map);
