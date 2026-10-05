@@ -146,6 +146,9 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
+        // Oturum kalıcılığını yerel depolamaya sabitle
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => console.error(err));
+
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
@@ -162,22 +165,29 @@
             return id;
         }
 
-        // Mobil WebView için Popup ile Giriş (Tarayıcıya fırlatmayı engeller)
+        // Google Giriş İşlemi (Native eklenti veya Capacitor ortamına uyumlu güvenli akış)
         document.getElementById('btn-google-login').addEventListener('click', async () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.useDeviceLanguage();
             try {
-                const result = await auth.signInWithPopup(provider);
-                if (result.user) {
-                    checkUserRegistration(result.user);
+                // Eğer Capacitor Google Auth eklentisi yüklüyse native açılır, değilse güvenli popup dener
+                if (window.Capacitor && window.Plugins && window.Plugins.GoogleAuth) {
+                    const googleUser = await window.Plugins.GoogleAuth.signIn();
+                    const credential = firebase.auth.GoogleAuthProvider.credential(googleUser.authentication.idToken);
+                    const result = await auth.signInWithCredential(credential);
+                    if (result.user) checkUserRegistration(result.user);
+                } else {
+                    // Web/Fallback Popup Yöntemi
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    auth.useDeviceLanguage();
+                    const result = await auth.signInWithPopup(provider);
+                    if (result.user) checkUserRegistration(result.user);
                 }
             } catch (error) {
                 console.error("Giriş Hatası:", error);
-                alert("Giriş yapılamadı: " + error.message);
+                alert("Giriş yapılamadı: " + (error.message || error));
             }
         });
 
-        // Sayfa Yüklendiğinde Doğrudan Oturum Dinleyicisi
+        // Sayfa Yüklendiğinde Oturum Durumunu Dinle
         window.addEventListener('DOMContentLoaded', () => {
             auth.onAuthStateChanged(user => {
                 if (user) {
@@ -264,6 +274,11 @@
         });
 
         document.getElementById('btn-logout').addEventListener('click', async () => {
+            try {
+                if (window.Capacitor && window.Plugins && window.Plugins.GoogleAuth) {
+                    await window.Plugins.GoogleAuth.signOut();
+                }
+            } catch(e) {}
             await auth.signOut();
             showScreen('login-screen');
         });
