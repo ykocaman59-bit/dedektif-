@@ -162,29 +162,23 @@
             return id;
         }
 
-        // Mobil WebView ortamı için güvenli Yönlendirme Metodu
+        // Mobil WebView için Popup ile Giriş (Tarayıcıya fırlatmayı engeller)
         document.getElementById('btn-google-login').addEventListener('click', async () => {
             const provider = new firebase.auth.GoogleAuthProvider();
+            auth.useDeviceLanguage();
             try {
-                await auth.signInWithRedirect(provider);
+                const result = await auth.signInWithPopup(provider);
+                if (result.user) {
+                    checkUserRegistration(result.user);
+                }
             } catch (error) {
-                console.error("Giriş Başlatma Hatası:", error);
-                alert("Giriş başlatılamadı: " + error.message);
+                console.error("Giriş Hatası:", error);
+                alert("Giriş yapılamadı: " + error.message);
             }
         });
 
-        // Sayfa Yüklendiğinde Yönlendirme Sonucunu Yakala ve Oturum Durumunu Dinle
-        window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const result = await auth.getRedirectResult();
-                if (result && result.user) {
-                    checkUserRegistration(result.user);
-                    return;
-                }
-            } catch (error) {
-                console.error("Yönlendirme sonu yakalama hatası:", error);
-            }
-
+        // Sayfa Yüklendiğinde Doğrudan Oturum Dinleyicisi
+        window.addEventListener('DOMContentLoaded', () => {
             auth.onAuthStateChanged(user => {
                 if (user) {
                     checkUserRegistration(user);
