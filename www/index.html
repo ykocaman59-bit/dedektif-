@@ -162,22 +162,29 @@
             return id;
         }
 
-        // Mobil APK WebView ortamında localhost/redirect hatasını önlemek için Popup Modu
+        // Mobil WebView ortamı için güvenli Yönlendirme Metodu
         document.getElementById('btn-google-login').addEventListener('click', async () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             try {
-                const result = await auth.signInWithPopup(provider);
-                if (result.user) {
-                    checkUserRegistration(result.user);
-                }
+                await auth.signInWithRedirect(provider);
             } catch (error) {
-                console.error("Giriş Hatası:", error);
-                alert("Giriş yapılamadı: " + error.message);
+                console.error("Giriş Başlatma Hatası:", error);
+                alert("Giriş başlatılamadı: " + error.message);
             }
         });
 
-        // Sayfa Yüklendiğinde Oturum Durumunu Doğrudan Dinle
-        window.addEventListener('DOMContentLoaded', () => {
+        // Sayfa Yüklendiğinde Yönlendirme Sonucunu Yakala ve Oturum Durumunu Dinle
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const result = await auth.getRedirectResult();
+                if (result && result.user) {
+                    checkUserRegistration(result.user);
+                    return;
+                }
+            } catch (error) {
+                console.error("Yönlendirme sonu yakalama hatası:", error);
+            }
+
             auth.onAuthStateChanged(user => {
                 if (user) {
                     checkUserRegistration(user);
