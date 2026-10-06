@@ -13,12 +13,12 @@
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; background: #1976d2; }
         .screen.active { display: flex; }
 
-        .auth-container { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 40px 24px; text-align: center; color: white; }
-        .auth-content { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 20px; max-width: 400px; }
-        .auth-content h1 { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
-        .auth-content p { font-size: 15px; line-height: 1.5; opacity: 0.9; }
+        .auth-container { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 30px 20px; text-align: center; color: white; overflow-y: auto; }
+        .auth-content { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 15px; max-width: 400px; width: 100%; }
+        .auth-content h1 { font-size: 26px; font-weight: bold; margin-bottom: 5px; }
+        .auth-content p { font-size: 14px; line-height: 1.4; opacity: 0.9; }
         
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; text-align: left; background: white; color: #333; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; background: white; color: #333; }
         input:focus { border-color: #1976d2; }
 
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; transition: opacity 0.2s; }
@@ -26,9 +26,7 @@
         .btn-primary { background-color: #1976d2; color: white; }
         .btn-success { background-color: #2e7d32; color: white; }
         .btn-danger { background-color: #c62828; color: white; }
-        
-        .btn-google { background-color: white; color: #333; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 30px; }
-        .btn-google img { width: 22px; height: 22px; }
+        .btn-warning { background-color: #f57c00; color: white; }
 
         .auth-footer { font-size: 12px; opacity: 0.8; line-height: 1.4; max-width: 350px; }
 
@@ -40,6 +38,7 @@
 
         #map { flex: 1; width: 100%; }
         .map-controls { padding: 12px; background: white; display: flex; gap: 10px; box-shadow: 0 -2px 6px rgba(0,0,0,0.1); }
+        .link-text { color: white; font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -47,46 +46,64 @@
     <!-- 1. GİRİŞ EKRANI -->
     <div id="login-screen" class="screen active">
         <div class="auth-container">
-            <div style="width: 100%;"></div>
+            <div></div>
             <div class="auth-content">
-                <div style="font-size: 48px; margin-bottom: -10px;">📍</div>
+                <div style="font-size: 44px; margin-bottom: -5px;">📍</div>
                 <h1>GPS Takip Sistemi</h1>
-                <p>Devam etmek için Google hesabınızla oturum açın.</p>
-            </div>
-            <div style="width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px;">
-                <button class="btn btn-google" id="btn-google-login">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-                    Google ile oturum aç
-                </button>
-                <div class="auth-footer">
-                    Yalnızca adınızı ve e-posta adresinizi güvenle doğrularız.
+                <p>Güvenli e-posta ve şifrenizle giriş yapın.</p>
+                
+                <div style="width: 100%; max-width: 350px; display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+                    <input type="email" id="login-email" placeholder="E-posta Adresiniz">
+                    <input type="password" id="login-password" placeholder="Şifreniz">
+                    <button class="btn btn-success" id="btn-login">Giriş Yap</button>
                 </div>
+                <div class="link-text" id="go-to-register">Hesabınız yok mu? Kayıt olun</div>
             </div>
+            <div class="auth-footer">Sahte hesapları önlemek için e-posta doğrulaması zorunludur.</div>
         </div>
     </div>
 
-    <!-- 2. İLK KAYIT MENÜSÜ EKRANI -->
+    <!-- 2. KAYIT EKRANI -->
     <div id="register-screen" class="screen" style="background: #f4f6f9; color: #333;">
         <div class="auth-container" style="justify-content: center;">
             <div class="profile-card" style="width: 100%; max-width: 400px; text-align: left;">
-                <h2 style="color: #1976d2; font-size: 20px; margin-bottom: 5px;">Kayıt Oluştur</h2>
-                <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Seçilen Gmail: <strong id="selected-email-text" style="color:#1976d2;"></strong></p>
+                <h2 style="color: #1976d2; font-size: 20px; margin-bottom: 5px;">Yeni Hesap Oluştur</h2>
+                <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Gerçek e-posta adresinizi giriniz, doğrulama kodu gönderilecektir.</p>
                 
-                <label style="font-size: 12px; color: #666; font-weight: bold;">Ad Soyad</label>
-                <input type="text" id="reg-name" placeholder="Adınız Soyadınız" style="margin-bottom: 10px;">
+                <label style="font-size: 11px; color: #666; font-weight: bold;">Ad Soyad</label>
+                <input type="text" id="reg-name" placeholder="Ad Soyad" style="margin-bottom: 8px;">
+
+                <label style="font-size: 11px; color: #666; font-weight: bold;">Kullanıcı Adı</label>
+                <input type="text" id="reg-username" placeholder="Kullanıcı adı" style="margin-bottom: 8px;">
+
+                <label style="font-size: 11px; color: #666; font-weight: bold;">E-posta Adresi</label>
+                <input type="email" id="reg-email" placeholder="ornek@gmail.com" style="margin-bottom: 8px;">
                 
-                <label style="font-size: 12px; color: #666; font-weight: bold;">Kullanıcı Adı</label>
-                <input type="text" id="reg-username" placeholder="Kullanıcı adınız" style="margin-bottom: 10px;">
+                <label style="font-size: 11px; color: #666; font-weight: bold;">Şifre Oluştur</label>
+                <input type="password" id="reg-password" placeholder="En az 6 haneli şifre" style="margin-bottom: 15px;">
                 
-                <label style="font-size: 12px; color: #666; font-weight: bold;">Telefon Numarası</label>
-                <input type="text" id="reg-phone" placeholder="05XXXXXXXXX" style="margin-bottom: 15px;">
-                
-                <button class="btn btn-success" id="btn-complete-register">Kayıt Oluştur ve IP ID Üret</button>
+                <button class="btn btn-success" id="btn-register">Kayıt Ol ve Doğrulama Gönder</button>
+                <div class="link-text" style="color: #1976d2; text-align: center; margin-top: 10px;" id="go-to-login">Zaten hesabın var mı? Giriş yap</div>
             </div>
         </div>
     </div>
 
-    <!-- 3. PROFİL VE EŞLEŞTİRME EKRANI -->
+    <!-- 3. E-POSTA DOĞRULAMA BEKLEME EKRANI -->
+    <div id="verify-screen" class="screen" style="background: #fff3e0; color: #333;">
+        <div class="auth-container" style="justify-content: center; color: #333;">
+            <div class="profile-card" style="width: 100%; max-width: 400px; text-align: center;">
+                <div style="font-size: 40px; margin-bottom: 5px;">✉️</div>
+                <h2 style="color: #f57c00; font-size: 20px; margin-bottom: 10px;">E-Posta Doğrulaması Gerekiyor</h2>
+                <p style="font-size: 13px; color: #555; line-height: 1.5; margin-bottom: 15px;">
+                    <strong id="verify-email-display" style="color: #1976d2;"></strong> adresine bir doğrulama bağlantısı gönderdik. Lütfen e-postanızı kontrol edip bağlantıya tıklayın.
+                </p>
+                <button class="btn btn-warning" id="btn-check-verification">Doğruladım, Kontrol Et</button>
+                <button class="btn btn-danger" style="margin-top: 10px; background-color: #757575;" id="verify-logout">Çıkış Yap / E-Postayı Değiştir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. PROFİL VE EŞLEŞTİRME EKRANI -->
     <div id="profile-screen" class="screen" style="background: #f4f6f9; color: #333;">
         <div class="profile-header">
             <h3>Kullanıcı Profili</h3>
@@ -113,7 +130,7 @@
         </div>
     </div>
 
-    <!-- 4. HARİTA EKRANI -->
+    <!-- 5. HARİTA EKRANI -->
     <div id="map-screen" class="screen" style="background: #f4f6f9;">
         <div class="profile-header">
             <h3>Canlı Konum Takibi</h3>
@@ -146,7 +163,6 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Oturum kalıcılığını yerel depolamaya sabitle
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => console.error(err));
 
         function showScreen(screenId) {
@@ -154,6 +170,9 @@
             document.getElementById(screenId).classList.add('active');
         }
 
+        // Ekran geçiş düğmeleri
+        document.getElementById('go-to-register').addEventListener('click', () => showScreen('register-screen'));
+        document.getElementById('go-to-login').addEventListener('click', () => showScreen('login-screen'));
         document.getElementById('btn-back-profile').addEventListener('click', () => showScreen('profile-screen'));
 
         function generateDeviceID() {
@@ -165,91 +184,126 @@
             return id;
         }
 
-        // Google Giriş İşlemi (Native eklenti veya Capacitor ortamına uyumlu güvenli akış)
-        document.getElementById('btn-google-login').addEventListener('click', async () => {
-            try {
-                // Eğer Capacitor Google Auth eklentisi yüklüyse native açılır, değilse güvenli popup dener
-                if (window.Capacitor && window.Plugins && window.Plugins.GoogleAuth) {
-                    const googleUser = await window.Plugins.GoogleAuth.signIn();
-                    const credential = firebase.auth.GoogleAuthProvider.credential(googleUser.authentication.idToken);
-                    const result = await auth.signInWithCredential(credential);
-                    if (result.user) checkUserRegistration(result.user);
-                } else {
-                    // Web/Fallback Popup Yöntemi
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    auth.useDeviceLanguage();
-                    const result = await auth.signInWithPopup(provider);
-                    if (result.user) checkUserRegistration(result.user);
-                }
-            } catch (error) {
-                console.error("Giriş Hatası:", error);
-                alert("Giriş yapılamadı: " + (error.message || error));
-            }
-        });
+        // 1. Giriş İşlemi
+        document.getElementById('btn-login').addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value.trim();
 
-        // Sayfa Yüklendiğinde Oturum Durumunu Dinle
-        window.addEventListener('DOMContentLoaded', () => {
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    checkUserRegistration(user);
-                } else {
-                    showScreen('login-screen');
-                }
-            });
-        });
-
-        async function checkUserRegistration(user) {
-            try {
-                const userDoc = await db.collection("users").doc(user.uid).get();
-                if (userDoc.exists) {
-                    loadProfile(user.uid);
-                    showScreen('profile-screen');
-                } else {
-                    document.getElementById('selected-email-text').innerText = user.email;
-                    showScreen('register-screen');
-                }
-            } catch (e) {
-                console.error("Kayıt kontrol hatası:", e);
-            }
-        }
-
-        // Kayıt Menüsünde Bilgileri Girip Kayıt Oluşturma ve IP ID Üretme
-        document.getElementById('btn-complete-register').addEventListener('click', async () => {
-            const user = auth.currentUser;
-            if (!user) {
-                alert("Oturum bulunamadı. Lütfen tekrar giriş yapın.");
-                showScreen('login-screen');
+            if(!email || !password) {
+                alert("Lütfen e-posta ve şifrenizi girin.");
                 return;
             }
 
+            try {
+                const res = await auth.signInWithEmailAndPassword(email, password);
+                checkUserFlow(res.user);
+            } catch (error) {
+                alert("Giriş başarısız: " + error.message);
+            }
+        });
+
+        // 2. Kayıt Olma ve Doğrulama Maili Gönderme
+        document.getElementById('btn-register').addEventListener('click', async () => {
             const name = document.getElementById('reg-name').value.trim();
             const username = document.getElementById('reg-username').value.trim();
-            const phone = document.getElementById('reg-phone').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
 
-            if (!name) {
-                alert("Lütfen ad ve soyad alanını doldurun.");
+            if(!name || !email || !password) {
+                alert("Lütfen zorunlu alanları doldurun.");
                 return;
             }
 
-            const deviceId = generateDeviceID();
-
             try {
+                // Firebase ile hesap oluştur
+                const res = await auth.createUserWithEmailAndPassword(email, password);
+                const user = res.user;
+
+                // Doğrulama maili gönder
+                await user.sendEmailVerification();
+
+                // Firestore'a geçici kullanıcı profili kaydet
+                const deviceId = generateDeviceID();
                 await db.collection("users").doc(user.uid).set({
                     name: name,
-                    username: username || user.displayName || "Kullanıcı",
-                    email: user.email,
-                    phone: phone,
+                    username: username || "Kullanıcı",
+                    email: email,
                     deviceId: deviceId,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                alert("Kayıt başarıyla oluşturuldu! IP ID'niz: " + deviceId);
-                loadProfile(user.uid);
-                showScreen('profile-screen');
+                document.getElementById('verify-email-display').innerText = email;
+                showScreen('verify-screen');
             } catch (error) {
-                console.error("Kayıt yazma hatası:", error);
-                alert("Kayıt sırasında hata oluştu: " + error.message);
+                alert("Kayıt oluşturulamadı: " + error.message);
             }
+        });
+
+        // 3. Doğrulama Durumunu Kontrol Etme
+        document.getElementById('btn-check-verification').addEventListener('click', async () => {
+            const user = auth.currentUser;
+            if(!user) {
+                showScreen('login-screen');
+                return;
+            }
+
+            // Kullanıcı bilgilerini yenile (Firebase tarafındaki doğrulama durumunu çekmek için)
+            await user.reload();
+            
+            if(user.emailVerified) {
+                alert("E-postanız başarıyla doğrulandı!");
+                checkUserFlow(user);
+            } else {
+                alert("E-postanız henüz doğrulanmamış. Lütfen gelen kutunuzdaki bağlantıya tıklayın ve tekrar deneyin.");
+            }
+        });
+
+        document.getElementById('verify-logout').addEventListener('click', async () => {
+            await auth.signOut();
+            showScreen('login-screen');
+        });
+
+        // Kullanıcı Durum Yönlendiricisi
+        async function checkUserFlow(user) {
+            await user.reload();
+            if (!user.emailVerified) {
+                document.getElementById('verify-email-display').innerText = user.email;
+                showScreen('verify-screen');
+                return;
+            }
+
+            // E-posta onaylıysa Firestore profil kontrolü yap
+            try {
+                const doc = await db.collection("users").doc(user.uid).get();
+                if(doc.exists) {
+                    loadProfile(user.uid);
+                    showScreen('profile-screen');
+                } else {
+                    // Profil dokümanı silindiyse yeniden oluştur
+                    const deviceId = generateDeviceID();
+                    await db.collection("users").doc(user.uid).set({
+                        name: user.displayName || "Kullanıcı",
+                        email: user.email,
+                        deviceId: deviceId,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    loadProfile(user.uid);
+                    showScreen('profile-screen');
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        // Oturum Açık mı Kontrol Et
+        window.addEventListener('DOMContentLoaded', () => {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    checkUserFlow(user);
+                } else {
+                    showScreen('login-screen');
+                }
+            });
         });
 
         async function loadProfile(uid) {
@@ -263,22 +317,17 @@
                     document.getElementById('p-device-id').innerText = data.deviceId || "-";
                 }
             } catch (e) {
-                console.error("Profil yüklenirken hata:", e);
+                console.error(e);
             }
         }
 
         document.getElementById('btn-copy').addEventListener('click', () => {
             const text = document.getElementById('p-device-id').innerText;
             navigator.clipboard.writeText(text);
-            alert("Cihaz IP ID kopyalandı: " + text);
+            alert("Cihaz ID kopyalandı!");
         });
 
         document.getElementById('btn-logout').addEventListener('click', async () => {
-            try {
-                if (window.Capacitor && window.Plugins && window.Plugins.GoogleAuth) {
-                    await window.Plugins.GoogleAuth.signOut();
-                }
-            } catch(e) {}
             await auth.signOut();
             showScreen('login-screen');
         });
@@ -287,43 +336,37 @@
         document.getElementById('btn-pair').addEventListener('click', () => {
             const targetId = document.getElementById('target-id-input').value.trim();
             if(targetId.length !== 12) {
-                alert("Lütfen geçerli 12 haneli bir ID girin.");
+                alert("Geçerli 12 haneli bir ID girin.");
                 return;
             }
             pairedTargetId = targetId;
-            alert("Cihaz başarıyla eşleştirildi!");
+            alert("Cihaz eşleştirildi!");
         });
 
         let map = null;
         let marker = null;
         document.getElementById('btn-open-map').addEventListener('click', () => {
             if(!pairedTargetId) {
-                alert("Önce karşı tarafın ID'sini girip cihazı eşleştirmelisiniz!");
+                alert("Önce cihaz eşleştirmesi yapmalısınız!");
                 return;
             }
             showScreen('map-screen');
 
             if(!map) {
                 map = L.map('map').setView([41.0082, 28.9784], 14);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}{r}.png', {
-                    maxZoom: 19,
-                    attribution: '&copy; OpenStreetMap'
-                }).addTo(map);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}{r}.png', { maxZoom: 19 }).addTo(map);
             }
 
             db.collection("locations").where("deviceId", "==", pairedTargetId)
               .onSnapshot((snapshot) => {
                   snapshot.forEach((doc) => {
                       const pos = doc.data();
-                      const lat = pos.latitude;
-                      const lng = pos.longitude;
-
                       if(marker) {
-                          marker.setLatLng([lat, lng]);
+                          marker.setLatLng([pos.latitude, pos.longitude]);
                       } else {
-                          marker = L.marker([lat, lng]).addTo(map).bindPopup("Eşleşen Cihaz").openPopup();
+                          marker = L.marker([pos.latitude, pos.longitude]).addTo(map).bindPopup("Takip Edilen Cihaz").openPopup();
                       }
-                      map.setView([lat, lng], 16);
+                      map.setView([pos.latitude, pos.longitude], 16);
                   });
               });
         });
@@ -335,23 +378,19 @@
             db.collection("users").doc(currentUser.uid).get().then((doc) => {
                 if(doc.exists) {
                     const myDeviceId = doc.data().deviceId;
-
                     if (navigator.geolocation) {
                         navigator.geolocation.watchPosition((position) => {
-                            const lat = position.coords.latitude;
-                            const lng = position.coords.longitude;
-
                             db.collection("locations").add({
                                 deviceId: myDeviceId,
-                                latitude: lat,
-                                longitude: lng,
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
                                 timestamp: Date.now()
                             });
                         }, (err) => console.error(err), { enableHighAccuracy: true });
 
-                        alert("Konumunuz arka planda paylaşılıyor!");
+                        alert("Konum paylaşımı başlatıldı!");
                     } else {
-                        alert("Tarayıcınız konum desteklemiyor.");
+                        alert("GPS desteklenmiyor.");
                     }
                 }
             });
