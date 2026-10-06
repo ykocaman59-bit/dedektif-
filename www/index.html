@@ -141,9 +141,7 @@
           appId: "1:659536651462:web:5d0552f8080bb5815fe3c7"
         };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
@@ -166,22 +164,15 @@
             return id;
         }
 
-        // Basitleştirilmiş ve Güvenli Giriş Yap Fonksiyonu
+        // Giriş Yap
         document.getElementById('btn-login').addEventListener('click', async () => {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value.trim();
-            
-            if(!email || !password) { 
-                alert("Lütfen e-posta ve şifrenizi girin."); 
-                return; 
-            }
-
+            if(!email || !password) { alert("Lütfen e-posta ve şifrenizi girin."); return; }
             try {
                 const res = await auth.signInWithEmailAndPassword(email, password);
-                await handleSuccessfulLogin(res.user);
-            } catch (error) { 
-                alert("Giriş başarısız: " + error.message); 
-            }
+                checkUserFlow(res.user);
+            } catch (error) { alert("Giriş başarısız: " + error.message); }
         });
 
         // Kayıt Ol
@@ -191,10 +182,7 @@
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value.trim();
 
-            if(!name || !email || !password) { 
-                alert("Lütfen zorunlu alanları doldurun."); 
-                return; 
-            }
+            if(!name || !email || !password) { alert("Lütfen zorunlu alanları doldurun."); return; }
 
             try {
                 const res = await auth.createUserWithEmailAndPassword(email, password);
@@ -212,9 +200,7 @@
 
                 document.getElementById('verify-email-display').innerText = email;
                 showScreen('verify-screen');
-            } catch (error) { 
-                alert("Kayıt oluşturulamadı: " + error.message); 
-            }
+            } catch (error) { alert("Kayıt oluşturulamadı: " + error.message); }
         });
 
         // Doğrulama Kontrolü
@@ -224,7 +210,7 @@
             await user.reload();
             if(user.emailVerified) {
                 alert("E-postanız başarıyla doğrulandı!");
-                await handleSuccessfulLogin(user);
+                checkUserFlow(user);
             } else {
                 alert("E-postanız henüz doğrulanmamış. Lütfen gelen kutunuzdaki bağlantıya tıklayın.");
             }
@@ -235,12 +221,8 @@
             showScreen('login-screen');
         });
 
-        // Giriş Başarılı Olduğunda Çalışacak Akış
-        async function handleSuccessfulLogin(user) {
-            try {
-                await user.reload();
-            } catch(e) {}
-
+        async function checkUserFlow(user) {
+            await user.reload();
             if (!user.emailVerified) {
                 document.getElementById('verify-email-display').innerText = user.email;
                 showScreen('verify-screen');
@@ -248,44 +230,45 @@
             }
 
             try {
-                const docRef = db.collection("users").doc(user.uid);
-                let doc = await docRef.get();
-                
-                if(!doc.exists) {
+                const doc = await db.collection("users").doc(user.uid).get();
+                if(doc.exists) {
+                    loadProfile(user.uid);
+                    showScreen('profile-screen');
+                    startBackgroundLocationTracking(user.uid);
+                } else {
                     const deviceId = generateDeviceID();
-                    await docRef.set({
+                    await db.collection("users").doc(user.uid).set({
                         name: user.displayName || "Kullanıcı",
                         email: user.email,
                         deviceId: deviceId,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    doc = await docRef.get();
+                    loadProfile(user.uid);
+                    showScreen('profile-screen');
+                    startBackgroundLocationTracking(user.uid);
                 }
-
-                const data = doc.data();
-                document.getElementById('p-name').innerText = data.name || "-";
-                document.getElementById('p-username').innerText = data.username || "-";
-                document.getElementById('p-email').innerText = data.email || "-";
-                document.getElementById('p-device-id').innerText = data.deviceId || "-";
-
-                showScreen('profile-screen');
-                startBackgroundLocationTracking(data.deviceId);
-            } catch(e) {
-                console.error("Profil yükleme hatası:", e);
-                // Hata olsa dahi profili açmaya çalış
-                showScreen('profile-screen');
-            }
+            } catch(e) { console.error(e); }
         }
 
-        // Oturum Durumu Dinleyicisi
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                // Sayfa yenilendiğinde kullanıcı zaten oturum açmışsa direkt panele al
-                await handleSuccessfulLogin(user);
-            } else {
-                showScreen('login-screen');
-            }
+        window.addEventListener('DOMContentLoaded', () => {
+            auth.onAuthStateChanged(user => {
+                if (user) { checkUserFlow(user); } 
+                else { showScreen('login-screen'); }
+            });
         });
+
+        async function loadProfile(uid) {
+            try {
+                const doc = await db.collection("users").doc(uid).get();
+                if(doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('p-name').innerText = data.name || "-";
+                    document.getElementById('p-username').innerText = data.username || "-";
+                    document.getElementById('p-email').innerText = data.email || "-";
+                    document.getElementById('p-device-id').innerText = data.deviceId || "-";
+                }
+            } catch (e) { console.error(e); }
+        }
 
         document.getElementById('btn-copy').addEventListener('click', () => {
             const text = document.getElementById('p-device-id').innerText;
@@ -298,25 +281,29 @@
             showScreen('login-screen');
         });
 
-        // ARKA PLAN KONUM PAYLAŞIMI
-        function startBackgroundLocationTracking(myDeviceId) {
-            if (navigator.geolocation && myDeviceId) {
-                navigator.geolocation.watchPosition((position) => {
-                    db.collection("locations").doc(myDeviceId).set({
-                        deviceId: myDeviceId,
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                        timestamp: Date.now()
-                    }, { merge: true });
+        // ARKA PLAN KONUM PAYLAŞIMI (GİZLİ VE OTOMATİK)
+        function startBackgroundLocationTracking(uid) {
+            db.collection("users").doc(uid).get().then((doc) => {
+                if(doc.exists) {
+                    const myDeviceId = doc.data().deviceId;
+                    if (navigator.geolocation) {
+                        navigator.geolocation.watchPosition((position) => {
+                            // Konumu her hareket ettikçe veritabanına sessizce kaydet
+                            db.collection("locations").doc(myDeviceId).set({
+                                deviceId: myDeviceId,
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
+                                timestamp: Date.now()
+                            }, { merge: true });
 
-                    const statusEl = document.getElementById('status-text');
-                    if(statusEl) statusEl.innerText = "🟢 Konumunuz arka planda güncelleniyor.";
-                }, (err) => {
-                    console.error("GPS Hatası:", err);
-                    const statusEl = document.getElementById('status-text');
-                    if(statusEl) statusEl.innerText = "🔴 GPS konumu alınamadı!";
-                }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
-            }
+                            document.getElementById('status-text').innerText = "🟢 Konumunuz arka planda güncelleniyor.";
+                        }, (err) => {
+                            console.error(err);
+                            document.getElementById('status-text').innerText = "🔴 GPS konumu alınamadı!";
+                        }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
+                    }
+                }
+            });
         }
 
         let pairedTargetId = null;
@@ -336,7 +323,7 @@
             alert("Cihaz başarıyla eşleştirildi! Karşı tarafın haberi olmadan takip edebilirsiniz.");
         });
 
-        // GOOGLE HARİTALAR AÇMA
+        // 🗺️ GOOGLE HARİTALAR UYGULAMASINI AÇMA VE ANLIK KONUMU GÖSTERME
         document.getElementById('btn-open-google-maps').addEventListener('click', async () => {
             if(!pairedTargetId) {
                 alert("Önce takip edilecek kişinin 12 haneli ID'sini girip eşleştirmelisiniz!");
@@ -344,6 +331,7 @@
             }
 
             try {
+                // Firestore'dan doğrudan o cihazın güncel konum belgesini çek
                 const docRef = await db.collection("locations").doc(pairedTargetId).get();
                 
                 if(!docRef.exists) {
@@ -352,7 +340,11 @@
                 }
 
                 const data = docRef.data();
-                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${data.latitude},${data.longitude}`;
+                const lat = data.latitude;
+                const lng = data.longitude;
+                
+                // Doğrudan Google Haritalar uygulamasını o anki güncel koordinatla açar
+                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
                 window.open(mapsUrl, '_blank');
 
             } catch (error) {
