@@ -1,4 +1,4 @@
-name: Android APK Build
+Name: Android APK Build
 
 on:
   push:
@@ -35,7 +35,6 @@ jobs:
       - name: Web Dosyalarını www Klasörüne Otomatik Taşı
         run: |
           mkdir -p www
-          # index.html ve app.js dosyalarını www klasörüne kopyala
           if [ -f "index.html" ]; then cp index.html www/; fi
           if [ -f "app.js" ]; then cp app.js www/; fi
 
@@ -44,6 +43,22 @@ jobs:
           rm -rf android
           npx cap add android
           npx cap sync android
+
+      - name: Android Manifest Dosyasına Tüm İzinleri Ekle
+        run: |
+          MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
+          
+          # </manifest> etiketinden hemen önce gerekli tüm izinleri ekliyoruz
+          sed -i '/<\/manifest>/i \
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\
+              <uses-permission android:name="android.permission.CAMERA" />\
+              <uses-permission android:name="android.permission.RECORD_AUDIO" />\
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\
+              <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />\
+              <uses-permission android:name="android.permission.READ_CONTACTS" />\
+              <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />\
+              <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />' "$MANIFEST_PATH"
 
       - name: Gradle ile Debug APK Oluştur ve Yeniden Adlandır
         run: |
