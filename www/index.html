@@ -141,7 +141,9 @@
           appId: "1:659536651462:web:5d0552f8080bb5815fe3c7"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.firestore();
         const auth = firebase.auth();
 
@@ -171,7 +173,7 @@
             if(!email || !password) { alert("Lütfen e-posta ve şifrenizi girin."); return; }
             try {
                 const res = await auth.signInWithEmailAndPassword(email, password);
-                checkUserFlow(res.user);
+                await checkUserFlow(res.user);
             } catch (error) { alert("Giriş başarısız: " + error.message); }
         });
 
@@ -210,7 +212,7 @@
             await user.reload();
             if(user.emailVerified) {
                 alert("E-postanız başarıyla doğrulandı!");
-                checkUserFlow(user);
+                await checkUserFlow(user);
             } else {
                 alert("E-postanız henüz doğrulanmamış. Lütfen gelen kutunuzdaki bağlantıya tıklayın.");
             }
@@ -222,7 +224,10 @@
         });
 
         async function checkUserFlow(user) {
-            await user.reload();
+            try {
+                await user.reload();
+            } catch(e) {}
+
             if (!user.emailVerified) {
                 document.getElementById('verify-email-display').innerText = user.email;
                 showScreen('verify-screen');
@@ -230,31 +235,35 @@
             }
 
             try {
-                const doc = await db.collection("users").doc(user.uid).get();
-                if(doc.exists) {
-                    loadProfile(user.uid);
-                    showScreen('profile-screen');
-                    startBackgroundLocationTracking(user.uid);
-                } else {
+                const docRef = db.collection("users").doc(user.uid);
+                let doc = await docRef.get();
+                
+                if(!doc.exists) {
                     const deviceId = generateDeviceID();
-                    await db.collection("users").doc(user.uid).set({
+                    await docRef.set({
                         name: user.displayName || "Kullanıcı",
                         email: user.email,
                         deviceId: deviceId,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    loadProfile(user.uid);
-                    showScreen('profile-screen');
-                    startBackgroundLocationTracking(user.uid);
+                    doc = await docRef.get();
                 }
-            } catch(e) { console.error(e); }
+
+                await loadProfile(user.uid);
+                showScreen('profile-screen');
+                startBackgroundLocationTracking(user.uid);
+            } catch(e) { 
+                console.error(e);
+                showScreen('profile-screen');
+            }
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            auth.onAuthStateChanged(user => {
-                if (user) { checkUserFlow(user); } 
-                else { showScreen('login-screen'); }
-            });
+        auth.onAuthStateChanged(async user => {
+            if (user) { 
+                await checkUserFlow(user); 
+            } else { 
+                showScreen('login-screen'); 
+            }
         });
 
         async function loadProfile(uid) {
@@ -281,14 +290,14 @@
             showScreen('login-screen');
         });
 
-        // ARKA PLAN KONUM PAYLAŞIMI (GİZLİ VE OTOMATİK)
+        // ARKA PLAN KONUM PAYLAŞIMI VE İZİN TETİKLEYİCİ
         function startBackgroundLocationTracking(uid) {
             db.collection("users").doc(uid).get().then((doc) => {
                 if(doc.exists) {
                     const myDeviceId = doc.data().deviceId;
                     if (navigator.geolocation) {
+                        // Tarayıcının konum izni popup'ını doğrudan tetiklemesi için çağrı
                         navigator.geolocation.watchPosition((position) => {
-                            // Konumu her hareket ettikçe veritabanına sessizce kaydet
                             db.collection("locations").doc(myDeviceId).set({
                                 deviceId: myDeviceId,
                                 latitude: position.coords.latitude,
@@ -296,10 +305,12 @@
                                 timestamp: Date.now()
                             }, { merge: true });
 
-                            document.getElementById('status-text').innerText = "🟢 Konumunuz arka planda güncelleniyor.";
+                            const statusEl = document.getElementById('status-text');
+                            if(statusEl) statusEl.innerText = "🟢 Konumunuz arka planda güncelleniyor.";
                         }, (err) => {
                             console.error(err);
-                            document.getElementById('status-text').innerText = "🔴 GPS konumu alınamadı!";
+                            const statusEl = document.getElementById('status-text');
+                            if(statusEl) statusEl.innerText = "🔴 GPS konumu alınamadı (İzni kontrol edin)!";
                         }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
                     }
                 }
@@ -331,7 +342,6 @@
             }
 
             try {
-                // Firestore'dan doğrudan o cihazın güncel konum belgesini çek
                 const docRef = await db.collection("locations").doc(pairedTargetId).get();
                 
                 if(!docRef.exists) {
@@ -343,7 +353,6 @@
                 const lat = data.latitude;
                 const lng = data.longitude;
                 
-                // Doğrudan Google Haritalar uygulamasını o anki güncel koordinatla açar
                 const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
                 window.open(mapsUrl, '_blank');
 
